@@ -37,3 +37,7 @@ coverage/
 # Misc
 *.log
 .mcp.json
+
+# for root directory
+package-lock.json
+package.json

@@ -10,7 +10,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Technology Stack
 
-- **Frontend:** Next.js 14+ (App Router), React 18+, Tailwind CSS, Zustand
+- **Frontend:** Next.js 14+ (App Router), React 18+, Tailwind CSS, shadcn/ui, Zustand
 - **Backend:** Next.js API Routes, Node.js 20+
 - **Video:** Remotion for composition and rendering
 - **Database:** Supabase PostgreSQL

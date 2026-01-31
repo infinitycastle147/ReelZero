@@ -168,10 +168,12 @@ An AI-powered SaaS platform that generates 60-second vertical short-form video c
 - **Framework**: Next.js 14+ (App Router)
 - **UI Library**: React 18+
 - **Styling**: Tailwind CSS
+- **Components**: shadcn/ui (Radix UI primitives)
+- **Icons**: Lucide React
 - **Video Player**: Remotion Player
-- **State Management**: React Context / Zustand
+- **State Management**: Zustand
 - **File Upload**: React Dropzone
-- **HTTP Client**: Fetch API / Axios
+- **HTTP Client**: Fetch API
 
 #### Backend
 - **Runtime**: Node.js 20+

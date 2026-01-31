@@ -139,15 +139,23 @@ ReelZero uses a **microservice architecture** with two separate deployments:
 │   │   └── globals.css
 │   │
 │   ├── components/
-│   │   ├── ui/                       # Base UI components
-│   │   │   ├── button.tsx
-│   │   │   ├── input.tsx
-│   │   │   ├── card.tsx
-│   │   │   ├── dialog.tsx
-│   │   │   ├── dropdown.tsx
-│   │   │   ├── progress.tsx
-│   │   │   ├── toast.tsx
-│   │   │   └── ...
+│   │   ├── ui/                       # shadcn/ui components (auto-generated)
+│   │   │   ├── button.tsx            # npx shadcn add button
+│   │   │   ├── card.tsx              # npx shadcn add card
+│   │   │   ├── dialog.tsx            # npx shadcn add dialog
+│   │   │   ├── dropdown-menu.tsx     # npx shadcn add dropdown-menu
+│   │   │   ├── input.tsx             # npx shadcn add input
+│   │   │   ├── label.tsx             # npx shadcn add label
+│   │   │   ├── progress.tsx          # npx shadcn add progress
+│   │   │   ├── select.tsx            # npx shadcn add select
+│   │   │   ├── skeleton.tsx          # npx shadcn add skeleton
+│   │   │   ├── slider.tsx            # npx shadcn add slider
+│   │   │   ├── switch.tsx            # npx shadcn add switch
+│   │   │   ├── tabs.tsx              # npx shadcn add tabs
+│   │   │   ├── textarea.tsx          # npx shadcn add textarea
+│   │   │   ├── toast.tsx             # npx shadcn add toast
+│   │   │   ├── toaster.tsx           # npx shadcn add toast
+│   │   │   └── tooltip.tsx           # npx shadcn add tooltip
 │   │   ├── layout/
 │   │   │   ├── header.tsx
 │   │   │   ├── sidebar.tsx
@@ -2192,9 +2200,131 @@ BOTTLENECK ANALYSIS
 
 ---
 
-## 18. Development Guidelines
+## 18. UI Components (shadcn/ui)
 
-### 18.1 Code Organization Principles
+### 18.1 Setup
+
+```bash
+# Initialize shadcn/ui in your Next.js project
+npx shadcn@latest init
+```
+
+### 18.2 Configuration (components.json)
+
+```json
+{
+  "$schema": "https://ui.shadcn.com/schema.json",
+  "style": "new-york",
+  "rsc": true,
+  "tsx": true,
+  "tailwind": {
+    "config": "tailwind.config.ts",
+    "css": "src/app/globals.css",
+    "baseColor": "neutral",
+    "cssVariables": true,
+    "prefix": ""
+  },
+  "aliases": {
+    "components": "@/components",
+    "utils": "@/lib/utils",
+    "ui": "@/components/ui",
+    "lib": "@/lib",
+    "hooks": "@/hooks"
+  },
+  "iconLibrary": "lucide"
+}
+```
+
+### 18.3 Installing Components
+
+```bash
+# Add individual components as needed
+npx shadcn@latest add button
+npx shadcn@latest add card
+npx shadcn@latest add dialog
+npx shadcn@latest add input
+npx shadcn@latest add label
+npx shadcn@latest add select
+npx shadcn@latest add tabs
+npx shadcn@latest add toast
+npx shadcn@latest add progress
+npx shadcn@latest add dropdown-menu
+npx shadcn@latest add avatar
+npx shadcn@latest add skeleton
+
+# Or add multiple at once
+npx shadcn@latest add button card dialog input label progress toast
+```
+
+### 18.4 Recommended Components for ReelZero
+
+| Component | Usage |
+|-----------|-------|
+| `button` | All buttons, CTAs |
+| `card` | Video cards, pricing cards, stats |
+| `dialog` | Modals, confirmations |
+| `input` | Form inputs, search |
+| `label` | Form labels |
+| `select` | Dropdowns (voice, theme selection) |
+| `tabs` | Dashboard navigation, settings |
+| `toast` | Notifications, success/error messages |
+| `progress` | Video generation progress |
+| `dropdown-menu` | User menu, actions menu |
+| `avatar` | User profile |
+| `skeleton` | Loading states |
+| `slider` | Audio/video controls |
+| `switch` | Toggle settings |
+| `textarea` | Prompt input, script editing |
+| `tooltip` | Help text, hints |
+
+### 18.5 Component Usage Example
+
+```tsx
+// Example: Video Generation Progress Card
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Progress } from "@/components/ui/progress"
+import { Button } from "@/components/ui/button"
+
+export function GenerationProgress({ progress, stage }: Props) {
+  return (
+    <Card className="w-full max-w-md">
+      <CardHeader>
+        <CardTitle>Generating Video</CardTitle>
+      </CardHeader>
+      <CardContent className="space-y-4">
+        <div className="space-y-2">
+          <div className="flex justify-between text-sm">
+            <span>{stage}</span>
+            <span>{progress}%</span>
+          </div>
+          <Progress value={progress} />
+        </div>
+        <Button variant="outline" className="w-full">
+          Cancel
+        </Button>
+      </CardContent>
+    </Card>
+  )
+}
+```
+
+### 18.6 Import Pattern (No Barrel Files)
+
+```typescript
+// ✅ Correct - Import directly from component file
+import { Button } from "@/components/ui/button"
+import { Card, CardContent, CardHeader } from "@/components/ui/card"
+import { Input } from "@/components/ui/input"
+
+// ❌ Wrong - Never create index.ts barrel files
+import { Button, Card, Input } from "@/components/ui"
+```
+
+---
+
+## 19. Development Guidelines
+
+### 19.1 Code Organization Principles
 
 ```
 1. FEATURE-FIRST STRUCTURE
@@ -2239,6 +2369,9 @@ BOTTLENECK ANALYSIS
 | React | 18.x | UI Library |
 | TypeScript | 5.x | Type System |
 | Tailwind CSS | 3.x | Styling |
+| **shadcn/ui** | latest | UI Components |
+| **Radix UI** | latest | Accessible Primitives |
+| **Lucide React** | latest | Icons |
 | Remotion | 4.x | Video Rendering |
 | Zustand | 4.x | State Management |
 | Zod | 3.x | Validation |
