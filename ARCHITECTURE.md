@@ -216,8 +216,7 @@
 │       │   └── Crossfade.tsx
 │       ├── captions/
 │       │   ├── WordByWord.tsx
-│       │   ├── FullSentence.tsx
-│       │   └── index.ts
+│       │   └── FullSentence.tsx
 │       └── utils/
 │           ├── timing.ts             # Frame calculations
 │           └── interpolation.ts      # Animation helpers
@@ -269,7 +268,7 @@ STEP 1: USER INPUT
                                                              ▼
 STEP 2: SCRIPT GENERATION                           ┌─────────────────┐
 ┌─────────────────┐                                 │   POST /api/    │
-│  Gemini 2.5     │◄────────────────────────────────│ video/generate  │
+│  Gemini Flash   │◄────────────────────────────────│ video/generate  │
 │  Flash API      │                                 └────────┬────────┘
 │                 │                                          │
 │  Input: prompt  │                                          │
@@ -422,14 +421,13 @@ TOTAL TIME: 70-90 seconds
 App
 ├── ClerkProvider
 │   └── QueryClientProvider
-│       └── ZustandProvider
-│           ├── LandingPage
+│       ├── LandingPage
 │           │   ├── Hero
 │           │   ├── Features
 │           │   ├── Pricing
 │           │   └── CTA
 │           │
-│           └── DashboardLayout
+│       └── DashboardLayout
 │               ├── Header
 │               │   ├── Logo
 │               │   ├── Navigation
@@ -1537,8 +1535,9 @@ async function generateWithHuggingFace(
 export const AI_CONFIG = {
   gemini: {
     apiKey: process.env.GEMINI_API_KEY!,
-    textModel: 'gemini-2.5-flash',
-    imageModel: 'gemini-2.5-flash-image-preview',
+    // Model names update frequently - verify at https://ai.google.dev/models
+    textModel: 'gemini-2.0-flash', // or 'gemini-1.5-flash' for stable version
+    imageModel: 'imagen-3.0-generate-002', // Imagen 3 for image generation
   },
   openai: {
     apiKey: process.env.OPENAI_API_KEY,
@@ -1547,6 +1546,7 @@ export const AI_CONFIG = {
   },
   elevenlabs: {
     apiKey: process.env.ELEVENLABS_API_KEY!,
+    // Models: eleven_multilingual_v2 (quality), eleven_flash_v2_5 (speed), eleven_turbo_v2_5 (lowest latency)
     defaultModel: 'eleven_multilingual_v2',
   },
   // Add more providers as needed

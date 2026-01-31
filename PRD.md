@@ -52,7 +52,7 @@ An AI-powered SaaS platform that generates 60-second vertical short-form video c
 2. **Crossfade** - Scenes blend smoothly into each other
 
 #### Image Sources (2 Options per Scene)
-1. **AI-generated** - Gemini 2.5 Flash Image (1024x1024 → resized to 1080x1920)
+1. **AI-generated** - Gemini Flash Image (1024x1024 → resized to 1080x1920)
 2. **User-uploaded** - PNG/JPG/WEBP, max 5MB, auto-resized to 1080x1920
 
 ---
@@ -78,7 +78,7 @@ An AI-powered SaaS platform that generates 60-second vertical short-form video c
 - Caption style selection (3 options)
 
 **Step 2: Script Generation & Editing**
-- Gemini 2.5 Flash generates:
+- Gemini Flash generates:
   - Narration script (~60s worth, ~1500 characters)
   - 5 scene descriptions with visual details
   - Scene timing breakdown
@@ -183,8 +183,8 @@ An AI-powered SaaS platform that generates 60-second vertical short-form video c
 - **Job Processing**: In-memory queue (MVP), Redis later
 
 #### AI Services
-- **LLM**: Google Gemini 2.5 Flash API
-- **Image Generation**: Google Gemini 2.5 Flash Image API
+- **LLM**: Google Gemini Flash API
+- **Image Generation**: Google Gemini Flash Image API
 - **Text-to-Speech**: ElevenLabs API
 - **Voice Options**: ElevenLabs voice library
 
@@ -247,14 +247,14 @@ An AI-powered SaaS platform that generates 60-second vertical short-form video c
 1. USER INPUT
    └─> Text prompt + preferences
    
-2. SCRIPT GENERATION (Gemini 2.5 Flash)
+2. SCRIPT GENERATION (Gemini Flash)
    └─> Structured JSON: narration + 5 scene descriptions
    
 3. USER EDITING (Optional)
    └─> Edit text, add/delete scenes, modify descriptions
    
 4. IMAGE GENERATION (Parallel)
-   ├─> AI: Gemini 2.5 Flash Image (1024x1024)
+   ├─> AI: Gemini Flash Image (1024x1024)
    └─> User uploads: Validate + resize to 1080x1920
    
 5. VOICE SYNTHESIS (ElevenLabs)
@@ -376,9 +376,10 @@ CREATE INDEX idx_usage_tracking_created_at ON usage_tracking(created_at DESC);
 
 ### 5.1 Google Gemini Integration
 
-#### Script Generation (Gemini 2.5 Flash)
+#### Script Generation (Gemini Flash)
 
-**API Endpoint**: `POST https://generativelanguage.googleapis.com/v1/models/gemini-2.5-flash:generateContent`
+**API Endpoint**: `POST https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent`
+> Note: Model names update frequently. Verify at https://ai.google.dev/models
 
 **Request Format**:
 ```json
@@ -424,9 +425,10 @@ CREATE INDEX idx_usage_tracking_created_at ON usage_tracking(created_at DESC);
 - Output: $0.40 per 1M tokens
 - Estimated: $0.001-0.003 per video
 
-#### Image Generation (Gemini 2.5 Flash Image)
+#### Image Generation (Imagen 3)
 
-**API Endpoint**: `POST https://generativelanguage.googleapis.com/v1/models/gemini-2.5-flash-image-preview:generateContent`
+**API Endpoint**: `POST https://generativelanguage.googleapis.com/v1beta/models/imagen-3.0-generate-002:predict`
+> Note: Uses Imagen 3 for high-quality image generation. Verify model availability at https://ai.google.dev/models
 
 **Request Format**:
 ```json
@@ -464,7 +466,7 @@ CREATE INDEX idx_usage_tracking_created_at ON usage_tracking(created_at DESC);
 ```json
 {
   "text": "[COMPLETE NARRATION SCRIPT]",
-  "model_id": "eleven_multilingual_v2",
+  "model_id": "eleven_multilingual_v2", // Also available: "eleven_flash_v2_5" (faster), "eleven_turbo_v2_5" (lowest latency)
   "voice_settings": {
     "stability": 0.5,
     "similarity_boost": 0.75,

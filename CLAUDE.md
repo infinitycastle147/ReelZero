@@ -17,7 +17,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - **Storage:** Supabase Storage
 - **Auth:** Clerk
 - **Payments:** Stripe
-- **AI Services:** Google Gemini 2.5 Flash (text/image), ElevenLabs (TTS)
+- **AI Services:** Google Gemini Flash (text), Imagen 3 (image), ElevenLabs (TTS)
 
 ## Build & Development Commands
 
