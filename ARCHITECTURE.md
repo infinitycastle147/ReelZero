@@ -1,13 +1,26 @@
 # System Architecture Document
 ## ReelZero - AI-Powered Reel/Shorts Creator
 
-**Version:** 1.0
+**Version:** 1.1
 **Date:** January 31, 2026
 **Based on:** PRD v2.0 FINAL
+
+> **Architecture Note:** This system uses a microservice architecture with the main app on Vercel and a dedicated video rendering service on Render.com.
 
 ---
 
 ## 1. High-Level Architecture Overview
+
+### 1.1 Multi-Service Architecture
+
+ReelZero uses a **microservice architecture** with two separate deployments:
+
+| Service | Repository | Host | Purpose |
+|---------|------------|------|---------|
+| **Main App** | `ReelZero` | Vercel (free) | UI, Auth, Payments, AI generation |
+| **Renderer** | `ReelZero-Renderer` | Render.com (free/$7) | Video rendering with Remotion |
+
+### 1.2 System Diagram
 
 ```
 ┌─────────────────────────────────────────────────────────────────────────────┐
@@ -22,32 +35,50 @@
                                       │ HTTPS
                                       ▼
 ┌─────────────────────────────────────────────────────────────────────────────┐
-│                              API LAYER (Next.js API Routes)                  │
+│                     MAIN APP - VERCEL (ReelZero)                             │
 │  ┌─────────────┐ ┌─────────────┐ ┌─────────────┐ ┌─────────────────────┐   │
 │  │ /api/auth   │ │ /api/video  │ │ /api/upload │ │ /api/subscription   │   │
 │  │   (Clerk)   │ │  generate   │ │   images    │ │    (Stripe)         │   │
 │  └──────┬──────┘ └──────┬──────┘ └──────┬──────┘ └──────────┬──────────┘   │
-└─────────┼───────────────┼───────────────┼───────────────────┼──────────────┘
-          │               │               │                   │
-          ▼               ▼               ▼                   ▼
-┌─────────────────────────────────────────────────────────────────────────────┐
-│                           SERVICE LAYER                                      │
+│         │               │               │                   │              │
+│         ▼               ▼               ▼                   ▼              │
 │  ┌─────────────┐ ┌─────────────┐ ┌─────────────┐ ┌─────────────────────┐   │
-│  │   Script    │ │   Image     │ │   Audio     │ │      Render         │   │
-│  │   Service   │ │   Service   │ │   Service   │ │      Service        │   │
+│  │   Script    │ │   Image     │ │   Audio     │ │   Render Client     │   │
+│  │   Service   │ │   Service   │ │   Service   │ │   (HTTP call)       │   │
 │  └──────┬──────┘ └──────┬──────┘ └──────┬──────┘ └──────────┬──────────┘   │
 └─────────┼───────────────┼───────────────┼───────────────────┼──────────────┘
           │               │               │                   │
-          ▼               ▼               ▼                   ▼
+          ▼               ▼               ▼                   │
+┌──────────────────────────────────────────────┐              │
+│              EXTERNAL AI SERVICES            │              │
+│  ┌─────────────┐ ┌─────────────┐ ┌─────────┐ │              │
+│  │   Gemini    │ │   Imagen    │ │Eleven   │ │              │
+│  │   Flash     │ │     3       │ │Labs TTS │ │              │
+│  └─────────────┘ └─────────────┘ └─────────┘ │              │
+└──────────────────────────────────────────────┘              │
+                                                              │
+                    ┌─────────────────────────────────────────┘
+                    │ POST /render
+                    ▼
 ┌─────────────────────────────────────────────────────────────────────────────┐
-│                        EXTERNAL SERVICES                                     │
-│  ┌─────────────┐ ┌─────────────┐ ┌─────────────┐ ┌─────────────────────┐   │
-│  │   Gemini    │ │   Gemini    │ │ ElevenLabs  │ │      Remotion       │   │
-│  │   2.5 Flash │ │   Image     │ │    TTS      │ │      Renderer       │   │
-│  └─────────────┘ └─────────────┘ └─────────────┘ └─────────────────────┘   │
+│               RENDERER MICROSERVICE - RENDER.COM (ReelZero-Renderer)         │
+│  ┌─────────────────────────────────────────────────────────────────────┐   │
+│  │                        Express/Fastify API                           │   │
+│  │  ┌─────────────────┐  ┌─────────────────┐  ┌─────────────────────┐  │   │
+│  │  │  POST /render   │  │  GET /health    │  │  GET /status/:id    │  │   │
+│  │  └────────┬────────┘  └─────────────────┘  └─────────────────────┘  │   │
+│  │           │                                                          │   │
+│  │           ▼                                                          │   │
+│  │  ┌─────────────────────────────────────────────────────────────┐    │   │
+│  │  │                   Remotion Renderer                          │    │   │
+│  │  │  • Download assets (images, audio)                           │    │   │
+│  │  │  • Build composition                                         │    │   │
+│  │  │  • Render frames (headless Chrome)                           │    │   │
+│  │  │  • Encode with FFmpeg (H.264)                                 │    │   │
+│  │  │  • Upload to Supabase Storage                                 │    │   │
+│  │  └─────────────────────────────────────────────────────────────┘    │   │
+│  └─────────────────────────────────────────────────────────────────────┘   │
 └─────────────────────────────────────────────────────────────────────────────┘
-          │               │               │                   │
-          └───────────────┴───────────────┴───────────────────┘
                                       │
                                       ▼
 ┌─────────────────────────────────────────────────────────────────────────────┐
@@ -1677,94 +1708,300 @@ STRIPE_PRICE_BASIC=price_...
 STRIPE_PRICE_PRO=price_...
 STRIPE_PRICE_ENTERPRISE=price_...
 
-# Remotion (if using Lambda)
-REMOTION_AWS_ACCESS_KEY=...
-REMOTION_AWS_SECRET_KEY=...
-REMOTION_AWS_REGION=us-east-1
+# Renderer Microservice
+RENDERER_SERVICE_URL=https://reelzero-renderer.onrender.com
+RENDERER_API_SECRET=your-secure-secret-here
 
 # Feature Flags
 ENABLE_WATERMARK=true
 MAX_FREE_VIDEOS=3
 ```
 
+### 13.2 Renderer Service Environment Variables (.env)
+
+```bash
+# Renderer Microservice (Render.com)
+
+# API Security
+API_SECRET=your-secure-secret-here
+PORT=3001
+
+# Supabase (for uploading rendered videos)
+SUPABASE_URL=https://xxx.supabase.co
+SUPABASE_SERVICE_KEY=eyJ...
+
+# Remotion Config
+REMOTION_CONCURRENCY=2
+REMOTION_OUTPUT_DIR=/tmp/renders
+```
+
 ---
 
 ## 14. Deployment Architecture
 
+### 14.1 Multi-Service Deployment
+
 ```
 ┌─────────────────────────────────────────────────────────────────────────────┐
-│                       DEPLOYMENT (Vercel)                                    │
+│                    DEPLOYMENT OVERVIEW (2 Services)                          │
 └─────────────────────────────────────────────────────────────────────────────┘
 
+┌─────────────────────────────────┐     ┌─────────────────────────────────┐
+│   SERVICE 1: MAIN APP           │     │   SERVICE 2: RENDERER           │
+│   ─────────────────────         │     │   ───────────────────           │
+│                                 │     │                                 │
+│   Repo: ReelZero                │     │   Repo: ReelZero-Renderer       │
+│   Host: Vercel (Free)           │     │   Host: Render.com (Free/$7)    │
+│   URL: reelzero.vercel.app      │     │   URL: reelzero-renderer.       │
+│                                 │     │        onrender.com             │
+│   Contains:                     │     │                                 │
+│   • Next.js App Router          │     │   Contains:                     │
+│   • UI/Dashboard                │────►│   • Express/Fastify API         │
+│   • Auth (Clerk)                │     │   • Remotion Renderer           │
+│   • Payments (Stripe)           │     │   • FFmpeg                      │
+│   • AI Services (Gemini, 11L)   │◄────│   • Single endpoint             │
+│   • Database queries            │     │                                 │
+│                                 │     │   Endpoints:                    │
+│   Timeout: 10s (API routes)     │     │   • POST /render                │
+│                                 │     │   • GET /health                 │
+│                                 │     │   • GET /status/:id             │
+│                                 │     │                                 │
+│                                 │     │   Timeout: None (long-running)  │
+└─────────────────────────────────┘     └─────────────────────────────────┘
+              │                                       │
+              │                                       │
+              ▼                                       ▼
 ┌─────────────────────────────────────────────────────────────────────────────┐
-│                              VERCEL                                          │
-│  ┌───────────────────────────────────────────────────────────────────────┐  │
-│  │                         EDGE NETWORK                                   │  │
-│  │  ┌─────────────┐  ┌─────────────┐  ┌─────────────┐  ┌─────────────┐  │  │
-│  │  │  CDN Node   │  │  CDN Node   │  │  CDN Node   │  │  CDN Node   │  │  │
-│  │  │  US-East    │  │  US-West    │  │  EU-West    │  │  AP-South   │  │  │
-│  │  └─────────────┘  └─────────────┘  └─────────────┘  └─────────────┘  │  │
-│  └───────────────────────────────────────────────────────────────────────┘  │
-│                                      │                                       │
-│                                      ▼                                       │
-│  ┌───────────────────────────────────────────────────────────────────────┐  │
-│  │                      SERVERLESS FUNCTIONS                              │  │
-│  │  ┌─────────────┐  ┌─────────────┐  ┌─────────────────────────────────┐│  │
-│  │  │  Next.js    │  │  API Routes │  │  Video Render Function          ││  │
-│  │  │  SSR/ISR    │  │  (Node.js)  │  │  (Extended timeout: 5min)       ││  │
-│  │  │             │  │             │  │  - Remotion bundled             ││  │
-│  │  │             │  │             │  │  - FFmpeg binary                ││  │
-│  │  └─────────────┘  └─────────────┘  └─────────────────────────────────┘│  │
-│  └───────────────────────────────────────────────────────────────────────┘  │
+│                           SHARED SERVICES                                    │
+│  ┌───────────────┐  ┌───────────────┐  ┌───────────────┐  ┌─────────────┐  │
+│  │   Supabase    │  │    Clerk      │  │    Stripe     │  │   Gemini    │  │
+│  │   Database    │  │    Auth       │  │   Payments    │  │   + 11Labs  │  │
+│  │   + Storage   │  │               │  │               │  │             │  │
+│  └───────────────┘  └───────────────┘  └───────────────┘  └─────────────┘  │
 └─────────────────────────────────────────────────────────────────────────────┘
+```
+
+### 14.2 Renderer Microservice Details (Render.com)
+
+```
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                    RENDERER SERVICE (Render.com)                             │
+└─────────────────────────────────────────────────────────────────────────────┘
+
+DIRECTORY STRUCTURE
+───────────────────
+reelzero-renderer/
+├── src/
+│   ├── index.ts              # Express app entry
+│   ├── routes/
+│   │   ├── render.ts         # POST /render endpoint
+│   │   ├── health.ts         # GET /health
+│   │   └── status.ts         # GET /status/:id
+│   ├── services/
+│   │   ├── remotion.ts       # Remotion rendering logic
+│   │   ├── storage.ts        # Supabase upload
+│   │   └── assets.ts         # Download images/audio
+│   └── remotion/
+│       ├── Root.tsx          # Remotion entry
+│       ├── Video.tsx         # Main composition
+│       ├── Scene.tsx         # Scene component
+│       ├── captions/
+│       │   ├── WordByWord.tsx
+│       │   └── FullSentence.tsx
+│       └── transitions/
+│           ├── Fade.tsx
+│           └── Crossfade.tsx
+├── Dockerfile                # For Render deployment
+├── package.json
+├── tsconfig.json
+└── render.yaml               # Render config
+
+RENDER.YAML CONFIG
+──────────────────
+services:
+  - type: web
+    name: reelzero-renderer
+    runtime: docker
+    plan: free  # or starter ($7/month)
+    healthCheckPath: /health
+    envVars:
+      - key: SUPABASE_URL
+        sync: false
+      - key: SUPABASE_SERVICE_KEY
+        sync: false
+      - key: API_SECRET
+        sync: false
+
+DOCKERFILE
+──────────
+FROM node:20-slim
+
+# Install FFmpeg and Chrome dependencies
+RUN apt-get update && apt-get install -y \
+    ffmpeg \
+    chromium \
+    --no-install-recommends \
+    && rm -rf /var/lib/apt/lists/*
+
+ENV PUPPETEER_SKIP_CHROMIUM_DOWNLOAD=true
+ENV PUPPETEER_EXECUTABLE_PATH=/usr/bin/chromium
+
+WORKDIR /app
+COPY package*.json ./
+RUN npm ci --only=production
+COPY . .
+RUN npm run build
+
+EXPOSE 3001
+CMD ["npm", "start"]
+
+
+API ENDPOINTS
+─────────────
+
+POST /render
+  Request:
+    {
+      "videoId": "uuid",
+      "scenes": [...],
+      "audioUrl": "https://...",
+      "settings": {
+        "captionStyle": "word_by_word",
+        "transitionType": "fade",
+        "watermark": false
+      }
+    }
+  Response:
+    {
+      "success": true,
+      "videoUrl": "https://supabase.../videos/xxx.mp4"
+    }
+
+GET /health
+  Response: { "status": "ok", "timestamp": "..." }
+
+GET /status/:videoId
+  Response: { "status": "rendering", "progress": 45 }
+
+
+SECURITY
+────────
+• API_SECRET header required for /render endpoint
+• Rate limiting: 10 requests/minute
+• Request validation with Zod
+• No direct public access to rendering
+```
+
+### 14.3 Communication Flow
+
+```
+┌──────────────────────────────────────────────────────────────────────────┐
+│                      VIDEO RENDERING FLOW                                 │
+└──────────────────────────────────────────────────────────────────────────┘
+
+1. USER TRIGGERS RENDER
+   ┌─────────────┐
+   │   Browser   │ Click "Generate Video"
+   └──────┬──────┘
+          │
+          ▼
+2. VERCEL PREPARES DATA
+   ┌─────────────────────────────────────────────────────────────────────┐
+   │   Vercel (Main App)                                                  │
+   │   • Validates user has credits                                       │
+   │   • Gathers: scenes, imageUrls, audioUrl, settings                  │
+   │   • Calls renderer microservice                                      │
+   └──────────────────────────────────┬──────────────────────────────────┘
                                       │
-                ┌─────────────────────┼─────────────────────┐
-                ▼                     ▼                     ▼
-┌─────────────────────┐  ┌─────────────────────┐  ┌─────────────────────┐
-│     Supabase        │  │       Clerk         │  │       Stripe        │
-│  ┌───────────────┐  │  │  ┌───────────────┐  │  │  ┌───────────────┐  │
-│  │   Postgres    │  │  │  │     Auth      │  │  │  │   Payments    │  │
-│  │   Database    │  │  │  │   Service     │  │  │  │   Service     │  │
-│  └───────────────┘  │  │  └───────────────┘  │  │  └───────────────┘  │
-│  ┌───────────────┐  │  │                     │  │                     │
-│  │    Storage    │  │  │                     │  │                     │
-│  │     (S3)      │  │  │                     │  │                     │
-│  └───────────────┘  │  │                     │  │                     │
-│  ┌───────────────┐  │  │                     │  │                     │
-│  │      CDN      │  │  │                     │  │                     │
-│  └───────────────┘  │  │                     │  │                     │
-└─────────────────────┘  └─────────────────────┘  └─────────────────────┘
+                                      │ POST /render
+                                      │ Headers: { "x-api-secret": "..." }
+                                      │ Body: { videoId, scenes, audioUrl, settings }
+                                      ▼
+3. RENDER.COM PROCESSES
+   ┌─────────────────────────────────────────────────────────────────────┐
+   │   Render.com (Renderer Service)                                      │
+   │                                                                       │
+   │   a) Download assets                                                  │
+   │      └─ Fetch images and audio from Supabase                         │
+   │                                                                       │
+   │   b) Build Remotion composition                                       │
+   │      └─ Create React component tree with timing                      │
+   │                                                                       │
+   │   c) Render video                                                     │
+   │      └─ Headless Chrome → frames → FFmpeg → MP4                      │
+   │                                                                       │
+   │   d) Upload to Supabase Storage                                       │
+   │      └─ /videos/{userId}/{videoId}.mp4                               │
+   │                                                                       │
+   │   e) Return video URL                                                 │
+   └──────────────────────────────────┬──────────────────────────────────┘
+                                      │
+                                      │ Response: { videoUrl: "https://..." }
+                                      ▼
+4. VERCEL COMPLETES
+   ┌─────────────────────────────────────────────────────────────────────┐
+   │   Vercel (Main App)                                                  │
+   │   • Updates database with videoUrl                                   │
+   │   • Deducts user credit                                              │
+   │   • Returns success to browser                                       │
+   └─────────────────────────────────────────────────────────────────────┘
+          │
+          ▼
+5. USER SEES VIDEO
+   ┌─────────────┐
+   │   Browser   │ Shows video player with download option
+   └─────────────┘
 
+TIMING BREAKDOWN
+────────────────
+• Vercel prep:        ~2s
+• Asset download:     ~5s
+• Remotion render:    ~60-90s
+• Upload to storage:  ~5s
+• Total:              ~70-100s
+```
 
-CI/CD PIPELINE (GitHub Actions)
-───────────────────────────────
-┌─────────────┐
-│   Push to   │
-│   main      │
-└──────┬──────┘
-       │
-       ▼
-┌─────────────────────┐
-│  Run Tests          │
-│  • Unit tests       │
-│  • Integration      │
-│  • E2E (optional)   │
-└──────────┬──────────┘
-           │ Pass
-           ▼
-┌─────────────────────┐
-│  Build              │
-│  • Next.js build    │
-│  • Type check       │
-│  • Lint             │
-└──────────┬──────────┘
-           │ Pass
-           ▼
-┌─────────────────────┐
-│  Deploy to Vercel   │
-│  • Preview (PR)     │
-│  • Production (main)│
-└─────────────────────┘
+### 14.4 Render.com Tier Comparison
+
+| Feature | Free Tier | Starter ($7/mo) |
+|---------|-----------|-----------------|
+| RAM | 512 MB | 512 MB |
+| CPU | Shared | 0.5 vCPU |
+| Sleep after inactivity | 15 min | Never |
+| Cold start | ~30-50s | None |
+| Bandwidth | 100 GB/mo | 100 GB/mo |
+| **Recommended for** | MVP/Testing | Production |
+
+### 14.5 CI/CD Pipeline (Both Services)
+
+```
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                         CI/CD PIPELINES                                      │
+└─────────────────────────────────────────────────────────────────────────────┘
+
+MAIN APP (ReelZero → Vercel)          RENDERER (ReelZero-Renderer → Render)
+────────────────────────────          ─────────────────────────────────────
+
+┌─────────────┐                       ┌─────────────┐
+│  Push to    │                       │  Push to    │
+│  main       │                       │  main       │
+└──────┬──────┘                       └──────┬──────┘
+       │                                     │
+       ▼                                     ▼
+┌─────────────────┐                   ┌─────────────────┐
+│  GitHub Actions │                   │  GitHub Actions │
+│  • Lint         │                   │  • Lint         │
+│  • Type check   │                   │  • Type check   │
+│  • Unit tests   │                   │  • Unit tests   │
+└────────┬────────┘                   └────────┬────────┘
+         │                                     │
+         ▼                                     ▼
+┌─────────────────┐                   ┌─────────────────┐
+│  Vercel Auto    │                   │  Render Auto    │
+│  Deploy         │                   │  Deploy         │
+│  • Preview (PR) │                   │  • Docker build │
+│  • Prod (main)  │                   │  • Deploy       │
+└─────────────────┘                   └─────────────────┘
 ```
 
 ---
