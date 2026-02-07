@@ -10,15 +10,16 @@
 
 ```
 F001 Foundation
- ├── F002 Auth
- │    └── F003 Database & User Sync
- │         ├── F004 AI Services (Script + Image + TTS)
- │         │    └── F006 Video Generation Wizard (UI)
- │         │         └── F007 Remotion Rendering Pipeline
- │         │              └── F008 Video Dashboard & Library
- │         └── F005 Credit & Billing
- │              └── F006 (credit checks in wizard)
- └── F009 Landing Page
+ ├── F002 Design System & Frontend Standards
+ │    └── F003 Auth (uses layout patterns, API patterns)
+ │         └── F004 Database & User Sync
+ │              ├── F005 AI Services (Script + Image + TTS)
+ │              │    └── F007 Video Generation Wizard (UI)
+ │              │         └── F008 Remotion Rendering Pipeline
+ │              │              └── F009 Video Dashboard & Library
+ │              └── F006 Credit & Billing
+ │                   └── F007 (credit checks in wizard)
+ └── F010 Landing Page
 ```
 
 ---
@@ -54,12 +55,77 @@ Medium - lots of files but straightforward setup
 
 ---
 
-## F002 - Authentication (Clerk)
+## F002 - Design System & Frontend Standards
 
-**Branch:** `002-auth`
-**PRD Ref:** Section 3.1.1
+**Branch:** `002-design-system`
+**PRD Ref:** Section 4.1 (Technology Stack)
 **Depends on:** F001
-**Blocks:** F003, F005, F006
+**Blocks:** F003, F007, F009, F010 (every feature with UI)
+
+### Scope
+
+#### Visual Design Tokens
+
+- Define brand color palette with primary accent hue (extend current neutral-only oklch tokens)
+- Establish color usage rules: when to use `primary`, `secondary`, `accent`, `muted`, `destructive`
+- Define gradient tokens if gradients are used (e.g., CTA buttons, hero backgrounds), or document "no gradients" as a conscious choice
+- Define shadow/elevation scale: `shadow-sm`, `shadow-md`, `shadow-lg` with specific use cases (cards, modals, dropdowns)
+- Verify border-radius scale usage rules: which radius for which component type (buttons, cards, inputs, modals)
+
+#### Transitions & Motion
+
+- Define standard transition durations: fast (150ms), normal (200ms), slow (300ms)
+- Define standard easing curves (e.g., `ease-out` for entrances, `ease-in` for exits)
+- Define hover/focus interaction patterns: color shift, scale, opacity, or combination
+- Document when to animate vs. when to use instant state changes
+- Configure reusable Tailwind transition classes (e.g., `transition-colors duration-200 ease-out`)
+
+#### Page Layout & Spacing System
+
+- Establish the "empty box" layout approach: every page starts as a full-viewport grid, divide into regions, then fill with components
+- Define page-level grid system: use CSS Grid for page structure, Flexbox for component-level alignment
+- Define spacing rhythm using `gap` on grid/flex containers — minimize use of `padding` for positioning
+- Document standard page regions: header (fixed height), sidebar (fixed/collapsible width), main content (fluid), footer (optional)
+- Define responsive breakpoints usage: mobile-first, with `sm`, `md`, `lg`, `xl` breakpoint behavior documented
+- Define max content widths for different page types (full-bleed dashboard vs. centered form pages)
+
+#### API Call Patterns (Client-Side)
+
+- Create a minimal `src/lib/api/client.ts` fetch wrapper that:
+  - Adds base URL and default headers (Content-Type, Accept)
+  - Attaches auth credentials/session tokens automatically (no manual token passing per call)
+  - Handles JSON parsing and typed responses
+  - Returns consistent `{ data, error }` shape
+  - Handles common HTTP errors (401 → redirect to sign-in, 403, 404, 500) in one place
+- All client-side API calls MUST go through this wrapper — no raw `fetch()` in components or hooks
+- Credential handling: auth tokens are attached at the wrapper level, never passed as function arguments or stored in component state
+
+#### Navigation & Active State Patterns
+
+- Define sidebar navigation active state styling (which tokens: `primary`, `accent`, or custom)
+- Define mobile navigation behavior (hamburger toggle, slide-in direction, overlay vs. push)
+- Define breadcrumb pattern if applicable, or document that flat nav is the standard
+- Define tab/pill navigation styling for in-page section switching
+
+### Deliverable
+
+Updated `globals.css` with any new tokens. `src/lib/api/client.ts` fetch wrapper ready for use.
+A `docs/DESIGN_SYSTEM.md` reference documenting all decisions: color usage, spacing rules,
+transition standards, layout approach, API call patterns. All subsequent UI features
+follow these standards.
+
+### Estimated Complexity
+
+Low-Medium - decisions and documentation with small amount of code (API wrapper, token updates)
+
+---
+
+## F003 - Authentication (Clerk)
+
+**Branch:** `003-auth`
+**PRD Ref:** Section 3.1.1
+**Depends on:** F001, F002
+**Blocks:** F004, F006, F007
 
 ### Scope
 
@@ -73,6 +139,7 @@ Medium - lots of files but straightforward setup
 - Implement `ClerkProvider` in root layout
 - Set up Clerk webhook endpoint `/api/auth/webhook` (user sync placeholder)
 - Create dashboard layout shell: header with `UserButton`, sidebar navigation
+- All API calls from dashboard use the fetch wrapper from F002
 
 ### Deliverable
 
@@ -85,12 +152,12 @@ Low-Medium - Clerk handles most of the heavy lifting
 
 ---
 
-## F003 - Database Schema & User Sync
+## F004 - Database Schema & User Sync
 
-**Branch:** `003-database`
+**Branch:** `004-database`
 **PRD Ref:** Section 4.4 (Database Schema)
-**Depends on:** F002
-**Blocks:** F004, F005, F006
+**Depends on:** F003
+**Blocks:** F005, F006, F007
 
 ### Scope
 
@@ -126,12 +193,12 @@ Medium - schema is well-defined, mainly implementation work
 
 ---
 
-## F004 - AI Service Integration (Script + Image + TTS)
+## F005 - AI Service Integration (Script + Image + TTS)
 
-**Branch:** `004-ai-services`
+**Branch:** `005-ai-services`
 **PRD Ref:** [Section 5.1, 5.2](PRD.md#5-ai-service-integration-details), [ARCHITECTURE.md Section 11](ARCHITECTURE.md)
-**Depends on:** F003
-**Blocks:** F006, F007
+**Depends on:** F004
+**Blocks:** F007, F008
 
 ### Scope
 
@@ -165,12 +232,12 @@ High - three different external APIs, error handling, file processing
 
 ---
 
-## F005 - Credit System & Stripe Billing
+## F006 - Credit System & Stripe Billing
 
-**Branch:** `005-billing`
+**Branch:** `006-billing`
 **PRD Ref:** Section 3.1.4, Section 6.1
-**Depends on:** F003
-**Blocks:** F006 (credit gating)
+**Depends on:** F004
+**Blocks:** F007 (credit gating)
 
 ### Scope
 
@@ -213,12 +280,12 @@ High - Stripe integration, webhook handling, credit state machine
 
 ---
 
-## F006 - Video Generation Wizard (UI)
+## F007 - Video Generation Wizard (UI)
 
-**Branch:** `006-video-wizard`
+**Branch:** `007-video-wizard`
 **PRD Ref:** Section 3.1.2 (Steps 1-4)
-**Depends on:** F004, F005
-**Blocks:** F007
+**Depends on:** F005, F006
+**Blocks:** F008
 
 ### Scope
 
@@ -246,7 +313,7 @@ High - Stripe integration, webhook handling, credit state machine
   - Settings summary before generation
 - Create `src/store/video-store.ts` - full wizard state management with Zustand
 - Create `src/hooks/use-video-generation.ts` - orchestration hook
-- Integrate credit check before proceeding to generation (from F005)
+- Integrate credit check before proceeding to generation (from F006)
 
 ### Deliverable
 
@@ -260,12 +327,12 @@ High - complex multi-step UI, state management, multiple API calls
 
 ---
 
-## F007 - Remotion Rendering Pipeline
+## F008 - Remotion Rendering Pipeline
 
-**Branch:** `007-rendering`
+**Branch:** `008-rendering`
 **PRD Ref:** [Section 3.1.2 (Steps 5-6)](PRD.md#312-video-generation-workflow), [ARCHITECTURE.md Section 7](ARCHITECTURE.md)
-**Depends on:** F006
-**Blocks:** F008
+**Depends on:** F007
+**Blocks:** F009
 
 ### Scope
 
@@ -315,11 +382,11 @@ Very High - Remotion compositions, synchronization math, microservice communicat
 
 ---
 
-## F008 - Video Dashboard & Library
+## F009 - Video Dashboard & Library
 
-**Branch:** `008-dashboard`
+**Branch:** `009-dashboard`
 **PRD Ref:** Section 3.1.3
-**Depends on:** F007
+**Depends on:** F008
 
 ### Scope
 
@@ -358,12 +425,12 @@ Medium - standard CRUD UI, well-defined patterns
 
 ---
 
-## F009 - Landing Page
+## F010 - Landing Page
 
-**Branch:** `009-landing`
+**Branch:** `010-landing`
 **PRD Ref:** Section 6.1 (pricing display), general marketing
-**Depends on:** F001
-**Can be built in parallel with F002-F008**
+**Depends on:** F001, F002
+**Can be built in parallel with F003-F009**
 
 ### Scope
 
@@ -371,7 +438,7 @@ Medium - standard CRUD UI, well-defined patterns
   - Hero section - headline, subheadline, CTA button
   - Features section - key selling points (speed, quality, ease)
   - How It Works - 3-step process visual
-  - Pricing section - 4 tier cards (reuse `pricing-table.tsx` from F005 or build standalone)
+  - Pricing section - 4 tier cards (reuse `pricing-table.tsx` from F006 or build standalone)
   - FAQ section
   - Footer with links
 - Mobile-responsive design (Tailwind breakpoints)
@@ -391,17 +458,18 @@ Low-Medium - static page with reusable components
 
 ## Implementation Order
 
-### Phase 1: Foundation (F001 → F002 → F003)
+### Phase 1: Foundation (F001 → F002 → F003 → F004)
 
-Build the base. After this phase: app runs, users can sign in, database is ready.
+Build the base. After this phase: design system established, app runs, users can sign in, database is ready.
 
 ```
 /speckit.specify "Project foundation - Next.js scaffolding, directory structure, error system, types, constants"
+/speckit.specify "Design system & frontend standards - color tokens, spacing system, layout approach, API wrapper, transition standards"
 /speckit.specify "Clerk authentication - Google OAuth, protected routes, dashboard shell"
 /speckit.specify "Database schema and user sync - Supabase tables, query layer, Clerk webhook, storage buckets"
 ```
 
-### Phase 2: Core Services (F004 + F005 in parallel)
+### Phase 2: Core Services (F005 + F006 in parallel)
 
 AI services and billing can be built in parallel since they share only the database layer.
 
@@ -410,7 +478,7 @@ AI services and billing can be built in parallel since they share only the datab
 /speckit.specify "Credit system and Stripe billing - subscriptions, credit tracking, Stripe checkout and webhooks"
 ```
 
-### Phase 3: Video Pipeline (F006 → F007)
+### Phase 3: Video Pipeline (F007 → F008)
 
 The core product experience. Wizard feeds into rendering.
 
@@ -419,7 +487,7 @@ The core product experience. Wizard feeds into rendering.
 /speckit.specify "Remotion rendering pipeline - compositions, sync engine, render orchestration, progress UI, preview"
 ```
 
-### Phase 4: Dashboard & Polish (F008 + F009 in parallel)
+### Phase 4: Dashboard & Polish (F009 + F010 in parallel)
 
 ```
 /speckit.specify "Video dashboard and library - video grid, search, filter, preview, download, delete, usage stats"
@@ -430,14 +498,15 @@ The core product experience. Wizard feeds into rendering.
 
 ## Feature Summary Table
 
-| ID | Feature | Depends On | Complexity | Phase |
-|----|---------|------------|------------|-------|
-| F001 | Foundation & Scaffolding | - | Medium | 1 |
-| F002 | Authentication (Clerk) | F001 | Low-Medium | 1 |
-| F003 | Database & User Sync | F002 | Medium | 1 |
-| F004 | AI Services (Script+Image+TTS) | F003 | High | 2 |
-| F005 | Credit System & Stripe | F003 | High | 2 |
-| F006 | Video Generation Wizard | F004, F005 | High | 3 |
-| F007 | Remotion Rendering Pipeline | F006 | Very High | 3 |
-| F008 | Video Dashboard & Library | F007 | Medium | 4 |
-| F009 | Landing Page | F001 | Low-Medium | 4 |
+| ID   | Feature                          | Depends On   | Complexity | Phase |
+|------|----------------------------------|--------------|------------|-------|
+| F001 | Foundation & Scaffolding         | -            | Medium     | 1     |
+| F002 | Design System & Frontend Standards | F001       | Low-Medium | 1     |
+| F003 | Authentication (Clerk)           | F001, F002   | Low-Medium | 1     |
+| F004 | Database & User Sync             | F003         | Medium     | 1     |
+| F005 | AI Services (Script+Image+TTS)   | F004         | High       | 2     |
+| F006 | Credit System & Stripe           | F004         | High       | 2     |
+| F007 | Video Generation Wizard          | F005, F006   | High       | 3     |
+| F008 | Remotion Rendering Pipeline      | F007         | Very High  | 3     |
+| F009 | Video Dashboard & Library        | F008         | Medium     | 4     |
+| F010 | Landing Page                     | F001, F002   | Low-Medium | 4     |
