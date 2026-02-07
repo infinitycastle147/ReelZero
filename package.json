@@ -11,6 +11,7 @@
     "pre-commit": "npm run lint && npm run type-check && npm run build"
   },
   "dependencies": {
+    "@clerk/nextjs": "^6.37.3",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "lucide-react": "^0.563.0",
@@ -20,6 +21,7 @@
     "react": "19.2.3",
     "react-dom": "19.2.3",
     "sonner": "^2.0.7",
+    "svix": "^1.84.1",
     "tailwind-merge": "^3.4.0",
     "zustand": "^5.0.11"
   },
