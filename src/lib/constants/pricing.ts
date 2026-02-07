@@ -1,0 +1,58 @@
+export const PRICING_TIERS = Object.freeze([
+  {
+    id: "free",
+    name: "Free",
+    monthlyPrice: 0,
+    annualPrice: 0,
+    creditsPerMonth: 3,
+    storageQuotaMb: 500,
+    features: {
+      hasWatermark: true,
+      maxResolution: "720p",
+      voiceOptions: "basic" as const,
+      hasPrioritySupport: false,
+    },
+  },
+  {
+    id: "basic",
+    name: "Basic",
+    monthlyPrice: 900,
+    annualPrice: 9000,
+    creditsPerMonth: 15,
+    storageQuotaMb: 2048,
+    features: {
+      hasWatermark: false,
+      maxResolution: "1080p",
+      voiceOptions: "basic" as const,
+      hasPrioritySupport: false,
+    },
+  },
+  {
+    id: "pro",
+    name: "Pro",
+    monthlyPrice: 2900,
+    annualPrice: 29000,
+    creditsPerMonth: 50,
+    storageQuotaMb: 10240,
+    features: {
+      hasWatermark: false,
+      maxResolution: "1080p",
+      voiceOptions: "all" as const,
+      hasPrioritySupport: true,
+    },
+  },
+  {
+    id: "enterprise",
+    name: "Enterprise",
+    monthlyPrice: 7900,
+    annualPrice: 79000,
+    creditsPerMonth: 200,
+    storageQuotaMb: 51200,
+    features: {
+      hasWatermark: false,
+      maxResolution: "1080p",
+      voiceOptions: "all" as const,
+      hasPrioritySupport: true,
+    },
+  },
+] as const);

@@ -1,0 +1,42 @@
+export const VOICE_OPTIONS = Object.freeze([
+  {
+    id: "voice_adam",
+    name: "Adam",
+    gender: "male" as const,
+    accent: "American",
+    tier: "basic" as const,
+    previewUrl: "/audio/previews/adam.mp3",
+  },
+  {
+    id: "voice_bella",
+    name: "Bella",
+    gender: "female" as const,
+    accent: "American",
+    tier: "basic" as const,
+    previewUrl: "/audio/previews/bella.mp3",
+  },
+  {
+    id: "voice_charlie",
+    name: "Charlie",
+    gender: "male" as const,
+    accent: "British",
+    tier: "basic" as const,
+    previewUrl: "/audio/previews/charlie.mp3",
+  },
+  {
+    id: "voice_diana",
+    name: "Diana",
+    gender: "female" as const,
+    accent: "British",
+    tier: "premium" as const,
+    previewUrl: "/audio/previews/diana.mp3",
+  },
+  {
+    id: "voice_echo",
+    name: "Echo",
+    gender: "neutral" as const,
+    accent: "American",
+    tier: "premium" as const,
+    previewUrl: "/audio/previews/echo.mp3",
+  },
+] as const);

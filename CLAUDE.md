@@ -6,7 +6,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 **ReelZero** - An AI-Powered Reel/Shorts Creator SaaS platform that generates 60-second vertical short-form videos from text prompts. The system uses AI to generate scripts, images, and voiceovers, then composes them into videos using Remotion.
 
-**Status:** Pre-development (planning phase complete, implementation pending)
+**Status:** Pre-development (planning phase complete, spec-kit integrated, implementation pending)
 
 ## Technology Stack
 
@@ -148,3 +148,50 @@ Total: ~70-90 seconds
 - `RENDER_*` - Video rendering
 - `STORAGE_*` - File operations
 - `EXTERNAL_*` - Third-party API failures
+
+## Spec-Kit (Specification-Driven Development)
+
+This project uses [GitHub Spec-Kit](https://github.com/github/spec-kit) for specification-driven development. Specs, plans, and tasks live in `.specify/` and feature-specific `specs/` directories.
+
+### Workflow Commands
+
+```bash
+/speckit.constitution    # Define/update project governing principles
+/speckit.specify         # Create feature specification from requirements
+/speckit.plan            # Create technical implementation plan from spec
+/speckit.tasks           # Generate actionable task breakdown from plan
+/speckit.implement       # Execute implementation of tasks
+```
+
+### Optional Enhancement Commands
+
+```bash
+/speckit.clarify         # Resolve ambiguous areas before planning
+/speckit.analyze         # Cross-artifact consistency check
+/speckit.checklist       # Generate quality validation checklists
+```
+
+### Key Directories
+
+- `.specify/memory/constitution.md` - Project constitution (governing principles)
+- `.specify/templates/` - Templates for specs, plans, tasks, checklists
+- `.specify/scripts/` - Helper scripts for the workflow
+- `.claude/commands/` - Slash command definitions for Claude Code
+- `specs/` - Feature specifications, plans, and task files (created per feature)
+
+### Workflow Order
+
+constitution → specify → plan → tasks → implement
+
+### Architecture Notes
+
+- **Microservice architecture**: Main app on Vercel + Renderer on Render.com
+- **Renderer is a separate repo** (`ReelZero-Renderer`): Express/Fastify API with Remotion
+- Main app communicates with renderer via `POST /render` HTTP call
+
+## Active Technologies
+- TypeScript 5.x (strict mode), Node.js 20+ + Next.js 14+ (App Router), React 18+, Tailwind CSS 3.x, shadcn/ui (Radix primitives), Zustand 4.x, ESLint 8.x (001-foundation)
+- N/A for this feature (Supabase PostgreSQL configured in F003) (001-foundation)
+
+## Recent Changes
+- 001-foundation: Added TypeScript 5.x (strict mode), Node.js 20+ + Next.js 14+ (App Router), React 18+, Tailwind CSS 3.x, shadcn/ui (Radix primitives), Zustand 4.x, ESLint 8.x
