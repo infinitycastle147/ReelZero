@@ -171,7 +171,7 @@
 
 **Purpose**: Final validation and cleanup across all user stories
 
-- [x] T042 Verify all directory structure exists per ARCHITECTURE.md Section 2 (100% directory coverage per SC-004)
+- [x] T042 Verify all directory structure exists per [docs/ARCHITECTURE.md Section 2](../../docs/ARCHITECTURE.md#2-directory-structure) (100% directory coverage per SC-004)
 - [x] T043 Verify `.env.example` documents every required environment variable key with placeholder values and comments (SC-007)
 - [x] T044 Verify no barrel files (`index.ts`) exist anywhere in the project (Constitution Principle III)
 - [x] T045 Verify no `any` types exist in any source file (Constitution Principle II)

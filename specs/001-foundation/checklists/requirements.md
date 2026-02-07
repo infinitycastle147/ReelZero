@@ -34,4 +34,4 @@
 - All items passed validation on first iteration
 - Spec is ready for `/speckit.plan` or `/speckit.clarify`
 - This is a developer-facing foundation feature, so "users" are developers building on this project
-- No [NEEDS CLARIFICATION] markers were needed - the F001 scope in FEATURES.md is well-defined
+- No [NEEDS CLARIFICATION] markers were needed - the F001 scope in [docs/FEATURES.md](../../../docs/FEATURES.md) is well-defined

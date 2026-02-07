@@ -217,7 +217,7 @@ Feature specifications live in `specs/{feature-name}/` directories.
 - All code reviews and PRs MUST verify compliance with these principles.
 - Complexity beyond what is specified here MUST be justified in writing (in the PR
   description or plan document) before implementation.
-- Reference documents: `CLAUDE.md` (agent guidance), `CODE_CONSTITUTION.md` (detailed
-  code rules), `PRD.md` (product requirements), `ARCHITECTURE.md` (system design).
+- Reference documents: [`docs/CLAUDE.md`](../docs/CLAUDE.md) (agent guidance), [`docs/CODE_CONSTITUTION.md`](../docs/CODE_CONSTITUTION.md) (detailed
+  code rules), [`docs/PRD.md`](../docs/PRD.md) (product requirements), [`docs/ARCHITECTURE.md`](../docs/ARCHITECTURE.md) (system design).
 
 **Version**: 1.0.0 | **Ratified**: 2026-02-07 | **Last Amended**: 2026-02-07

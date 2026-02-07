@@ -1,6 +1,6 @@
 # Feature Breakdown - ReelZero MVP
 
-**Based on:** PRD v2.0 FINAL, ARCHITECTURE.md v1.1
+**Based on:** [PRD v2.0 FINAL](PRD.md), [ARCHITECTURE.md v1.1](ARCHITECTURE.md)
 **Spec-Kit workflow:** For each feature below, run:
 `/speckit.specify` → `/speckit.plan` → `/speckit.tasks` → `/speckit.implement`
 
@@ -33,7 +33,7 @@ F001 Foundation
 
 - Initialize Next.js 14+ with App Router, TypeScript strict mode
 - Configure Tailwind CSS + shadcn/ui (install base components)
-- Set up project directory structure per ARCHITECTURE.md Section 2
+- Set up project directory structure per [ARCHITECTURE.md Section 2](ARCHITECTURE.md#2-directory-structure)
 - Configure ESLint, Prettier, path aliases (`@/`)
 - Create `package.json` scripts: `dev`, `build`, `lint`, `type-check`, `pre-commit`
 - Set up `.env.example` with all required environment variable placeholders
@@ -129,7 +129,7 @@ Medium - schema is well-defined, mainly implementation work
 ## F004 - AI Service Integration (Script + Image + TTS)
 
 **Branch:** `004-ai-services`
-**PRD Ref:** Section 5.1, 5.2, ARCHITECTURE.md Section 11
+**PRD Ref:** [Section 5.1, 5.2](PRD.md#5-ai-service-integration-details), [ARCHITECTURE.md Section 11](ARCHITECTURE.md)
 **Depends on:** F003
 **Blocks:** F006, F007
 
@@ -263,7 +263,7 @@ High - complex multi-step UI, state management, multiple API calls
 ## F007 - Remotion Rendering Pipeline
 
 **Branch:** `007-rendering`
-**PRD Ref:** Section 3.1.2 (Steps 5-6), ARCHITECTURE.md Section 7
+**PRD Ref:** [Section 3.1.2 (Steps 5-6)](PRD.md#312-video-generation-workflow), [ARCHITECTURE.md Section 7](ARCHITECTURE.md)
 **Depends on:** F006
 **Blocks:** F008
 

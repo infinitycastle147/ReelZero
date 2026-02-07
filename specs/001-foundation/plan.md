@@ -5,7 +5,7 @@
 
 ## Summary
 
-Scaffold the ReelZero project from scratch: initialize a Next.js 14+ application with App Router and TypeScript strict mode, configure Tailwind CSS with shadcn/ui, establish the full directory structure per ARCHITECTURE.md, set up ESLint and path aliases, create npm scripts for development workflow and quality gates, build the error handling foundation (AppError, ERROR_CODES, error middleware), define shared constants (video specs, pricing tiers, voice options), create base TypeScript type definitions (video, scene, API, database), set up Zustand store skeletons, and provide an `.env.example` template.
+Scaffold the ReelZero project from scratch: initialize a Next.js 14+ application with App Router and TypeScript strict mode, configure Tailwind CSS with shadcn/ui, establish the full directory structure per [docs/ARCHITECTURE.md](../../docs/ARCHITECTURE.md), set up ESLint and path aliases, create npm scripts for development workflow and quality gates, build the error handling foundation (AppError, ERROR_CODES, error middleware), define shared constants (video specs, pricing tiers, voice options), create base TypeScript type definitions (video, scene, API, database), set up Zustand store skeletons, and provide an `.env.example` template.
 
 ## Technical Context
 
@@ -126,7 +126,7 @@ tests/
 └── e2e/
 ```
 
-**Structure Decision**: Next.js App Router single-project structure following ARCHITECTURE.md Section 2. All source code under `src/` with path alias `@/` mapped to `src/`. This feature creates the full directory tree with stub directories for future features, and implements concrete files only for error handling, constants, types, stores, and project configuration.
+**Structure Decision**: Next.js App Router single-project structure following [docs/ARCHITECTURE.md Section 2](../../docs/ARCHITECTURE.md#2-directory-structure). All source code under `src/` with path alias `@/` mapped to `src/`. This feature creates the full directory tree with stub directories for future features, and implements concrete files only for error handling, constants, types, stores, and project configuration.
 
 ## Complexity Tracking
 

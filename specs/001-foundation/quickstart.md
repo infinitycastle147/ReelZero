@@ -121,7 +121,7 @@ npm run pre-commit   # All three checks pass
 - [ ] `npm run dev` starts without errors
 - [ ] Browser shows "ReelZero" at localhost:3000
 - [ ] `npm run pre-commit` passes all three checks
-- [ ] All directory structure exists per ARCHITECTURE.md
+- [ ] All directory structure exists per [docs/ARCHITECTURE.md](../../docs/ARCHITECTURE.md)
 - [ ] `AppError` can be instantiated and serialized
 - [ ] ERROR_CODES are importable and typed
 - [ ] Constants are importable with correct values

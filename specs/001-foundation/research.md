@@ -6,7 +6,7 @@
 
 ## Research Summary
 
-No unknowns required resolution. All technology choices are prescribed by the PRD v2.0 and ARCHITECTURE.md v1.1. Research below documents best practices for each technology decision relevant to F001.
+No unknowns required resolution. All technology choices are prescribed by the [PRD v2.0](../../docs/PRD.md) and [ARCHITECTURE.md v1.1](../../docs/ARCHITECTURE.md). Research below documents best practices for each technology decision relevant to F001.
 
 ---
 
