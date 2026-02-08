@@ -2,16 +2,27 @@ import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 import { Webhook } from "svix";
 
+import { createFreeSubscription, updateSubscription } from "@/lib/db/queries/subscriptions";
+import { createUser, getUserByClerkIdIncludeDeleted, updateUser, softDeleteUser } from "@/lib/db/queries/users";
 import { AppError } from "@/lib/errors/app-error";
 import { ERROR_CODES } from "@/lib/errors/codes";
 import { withErrorHandler } from "@/lib/errors/middleware";
 
+type ClerkEmailAddress = {
+  email_address: string;
+  id: string;
+};
+
+type ClerkUserData = {
+  id: string;
+  email_addresses: ClerkEmailAddress[];
+  first_name: string | null;
+  last_name: string | null;
+};
+
 type WebhookEventPayload = {
   type: string;
-  data: {
-    id: string;
-    [key: string]: unknown;
-  };
+  data: ClerkUserData;
   object: string;
 };
 
@@ -40,7 +51,7 @@ export const POST = withErrorHandler(async (request: NextRequest) => {
     );
   }
 
-  // Verify webhook signature
+  // Verify webhook signature (preserved from F003)
   const webhook = new Webhook(CLERK_WEBHOOK_SECRET);
 
   let event: WebhookEventPayload;
@@ -58,10 +69,24 @@ export const POST = withErrorHandler(async (request: NextRequest) => {
     );
   }
 
-  // Log event (placeholder — database sync deferred to F004)
-  console.log(
-    `[webhook] Received event: type=${event.type}, userId=${event.data.id}`
-  );
+  const { type, data } = event;
+  const clerkUserId = data.id;
+  const email = data.email_addresses?.[0]?.email_address ?? "";
+  const name = [data.first_name, data.last_name].filter(Boolean).join(" ") || email;
+
+  if (type === "user.created") {
+    const user = await createUser({ clerk_user_id: clerkUserId, email, name });
+    await createFreeSubscription(user.id);
+  } else if (type === "user.updated") {
+    await updateUser(clerkUserId, { email, name });
+  } else if (type === "user.deleted") {
+    // Fetch user before soft-deleting so we can expire their subscription
+    const user = await getUserByClerkIdIncludeDeleted(clerkUserId);
+    await softDeleteUser(clerkUserId);
+    if (user) {
+      await updateSubscription(user.id, { status: "expired" });
+    }
+  }
 
   return NextResponse.json({ data: { success: true } });
 });
