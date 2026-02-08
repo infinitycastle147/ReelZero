@@ -29,11 +29,11 @@
 
 **CRITICAL**: No user story work can begin until this phase is complete — all subsequent documentation and components reference these token values.
 
-- [ ] T001 [US1] Update `:root` light mode color tokens in `src/app/globals.css` — replace `--primary`, `--primary-foreground`, `--accent`, `--accent-foreground`, and `--ring` with violet oklch values from research R1 (e.g., `--primary: oklch(0.546 0.245 262.881)`)
-- [ ] T002 [US1] Update `.dark` dark mode color tokens in `src/app/globals.css` — replace `--primary`, `--primary-foreground`, `--accent`, `--accent-foreground`, and `--ring` with dark-mode violet oklch values from research R1
-- [ ] T003 [US1] Add sidebar color tokens in `src/app/globals.css` — update `--sidebar-primary`, `--sidebar-primary-foreground`, `--sidebar-accent`, `--sidebar-accent-foreground`, and `--sidebar-ring` in both `:root` and `.dark` blocks to use violet-tinted values consistent with the main palette
-- [ ] T004 [US1] Add gradient custom properties in `src/app/globals.css` — define `--gradient-cta` and `--gradient-hero` in `:root` block with oklch gradient values from research R2
-- [ ] T005 [US1] Add gradient utility classes in `src/app/globals.css` — create `.bg-gradient-cta` and `.bg-gradient-hero` utility classes in `@layer utilities` that apply `background: var(--gradient-cta)` and `background: var(--gradient-hero)` respectively
+- [x] T001 [US1] Update `:root` light mode color tokens in `src/app/globals.css` — replace `--primary`, `--primary-foreground`, `--accent`, `--accent-foreground`, and `--ring` with violet oklch values from research R1 (e.g., `--primary: oklch(0.546 0.245 262.881)`)
+- [x] T002 [US1] Update `.dark` dark mode color tokens in `src/app/globals.css` — replace `--primary`, `--primary-foreground`, `--accent`, `--accent-foreground`, and `--ring` with dark-mode violet oklch values from research R1
+- [x] T003 [US1] Add sidebar color tokens in `src/app/globals.css` — update `--sidebar-primary`, `--sidebar-primary-foreground`, `--sidebar-accent`, `--sidebar-accent-foreground`, and `--sidebar-ring` in both `:root` and `.dark` blocks to use violet-tinted values consistent with the main palette
+- [x] T004 [US1] Add gradient custom properties in `src/app/globals.css` — define `--gradient-cta` and `--gradient-hero` in `:root` block with oklch gradient values from research R2
+- [x] T005 [US1] Add gradient utility classes in `src/app/globals.css` — create `.bg-gradient-cta` and `.bg-gradient-hero` utility classes in `@layer utilities` that apply `background: var(--gradient-cta)` and `background: var(--gradient-hero)` respectively
 
 **Checkpoint**: Foundation ready — `globals.css` has all violet tokens and gradient utilities. All shadcn/ui components now render with violet primary color.
 
@@ -47,8 +47,8 @@
 
 ### Implementation for User Story 1
 
-- [ ] T006 [US1] Review `src/components/layout/sidebar-nav-item.tsx` — verify active state uses `bg-accent text-accent-foreground` which now resolves to violet-tinted values. No code changes expected; confirm visually after token update
-- [ ] T007 [US1] Write Section 1 "Color & Visual Tokens" in `docs/DESIGN_SYSTEM.md` — document the full color palette (primary, secondary, accent, muted, destructive), light/dark mode values, usage rules for each semantic token, gradient tokens and their restricted use cases (CTA buttons and hero only per FR-003), shadow/elevation scale (shadow-sm/md/lg mapped to component tiers per R3), and border-radius usage rules (per FR-005)
+- [x] T006 [US1] Review `src/components/layout/sidebar-nav-item.tsx` — verify active state uses `bg-accent text-accent-foreground` which now resolves to violet-tinted values. No code changes expected; confirm visually after token update
+- [x] T007 [US1] Write Section 1 "Color & Visual Tokens" in `docs/DESIGN_SYSTEM.md` — document the full color palette (primary, secondary, accent, muted, destructive), light/dark mode values, usage rules for each semantic token, gradient tokens and their restricted use cases (CTA buttons and hero only per FR-003), shadow/elevation scale (shadow-sm/md/lg mapped to component tiers per R3), and border-radius usage rules (per FR-005)
 
 **Checkpoint**: User Story 1 complete — visual identity is applied via tokens and fully documented.
 
@@ -62,7 +62,7 @@
 
 ### Implementation for User Story 2
 
-- [ ] T008 [P] [US2] Write Section 3 "Page Layout & Spacing" in `docs/DESIGN_SYSTEM.md` — document the existing dashboard grid pattern from `src/app/(dashboard)/layout.tsx` (grid-rows, grid-cols, header h-16, sidebar 256px), the "empty box" approach (grid → regions → components), gap-over-padding rule (FR-011), max content widths for full-bleed vs. centered pages (FR-013), and responsive breakpoints at <640px / 640-1023px / >=1024px (FR-012) including sidebar collapse behavior, content reflow, and mobile overlay pattern
+- [x] T008 [P] [US2] Write Section 3 "Page Layout & Spacing" in `docs/DESIGN_SYSTEM.md` — document the existing dashboard grid pattern from `src/app/(dashboard)/layout.tsx` (grid-rows, grid-cols, header h-16, sidebar 256px), the "empty box" approach (grid → regions → components), gap-over-padding rule (FR-011), max content widths for full-bleed vs. centered pages (FR-013), and responsive breakpoints at <640px / 640-1023px / >=1024px (FR-012) including sidebar collapse behavior, content reflow, and mobile overlay pattern
 
 **Checkpoint**: User Story 2 complete — layout patterns are documented and reference the existing implementation.
 
@@ -76,7 +76,7 @@
 
 ### Implementation for User Story 3
 
-- [ ] T009 [P] [US3] Write Section 2 "Transitions & Motion" in `docs/DESIGN_SYSTEM.md` — document the three transition tiers (fast: `transition-colors duration-150 ease-out`, normal: `transition-all duration-200 ease-out`, slow: `transition-transform duration-300 ease-in-out` per R6), map each tier to specific use cases (hover states, dropdowns, sidebar slide), define hover/focus interaction patterns for buttons, inputs, links, and nav items (FR-008), define easing curves for entrances vs exits (FR-007), and list when NOT to animate (checkbox toggles, radio selections, instant data updates per FR-009)
+- [x] T009 [P] [US3] Write Section 2 "Transitions & Motion" in `docs/DESIGN_SYSTEM.md` — document the three transition tiers (fast: `transition-colors duration-150 ease-out`, normal: `transition-all duration-200 ease-out`, slow: `transition-transform duration-300 ease-in-out` per R6), map each tier to specific use cases (hover states, dropdowns, sidebar slide), define hover/focus interaction patterns for buttons, inputs, links, and nav items (FR-008), define easing curves for entrances vs exits (FR-007), and list when NOT to animate (checkbox toggles, radio selections, instant data updates per FR-009)
 
 **Checkpoint**: User Story 3 complete — all transition and interaction patterns are documented.
 
@@ -90,14 +90,14 @@
 
 ### Implementation for User Story 4
 
-- [ ] T010 [US4] Create `src/lib/api/client.ts` — implement the API fetch wrapper with:
+- [x] T010 [US4] Create `src/lib/api/client.ts` — implement the API fetch wrapper with:
   - Types: `ApiSuccessResponse<T>`, `ApiErrorResponse`, `ApiResponse<T>` discriminated union (from data-model.md)
   - Config: `ApiClientConfig` with `baseUrl` from `NEXT_PUBLIC_API_URL` env var (default empty string), default headers (`Content-Type: application/json`, `Accept: application/json`), `credentials: 'include'` (per R4)
   - Methods: `apiClient.get<T>(path, options?)`, `apiClient.post<T>(path, body?, options?)`, `apiClient.put<T>(path, body?, options?)`, `apiClient.delete<T>(path, options?)`
   - Behaviors: auto-prepend base URL, 401 → `window.location.href = '/sign-in'`, network error → `{ data: null, error: { code: 'NETWORK_ERROR', message: 'Network request failed' } }`, non-401 HTTP errors → parse JSON error body or return generic error shape
   - Support `options.headers` override for multipart requests (omit Content-Type)
   - Named export `apiClient` object, no default export, no barrel files
-- [ ] T011 [US4] Write Section 4 "API Call Patterns" in `docs/DESIGN_SYSTEM.md` — document the fetch wrapper usage (import path, method signatures), response shapes with TypeScript examples, error handling flow (401 redirect, network errors, validation errors), when to use each HTTP method, how to handle multipart/file uploads, and the rule that no raw `fetch()` calls are permitted (FR-018)
+- [x] T011 [US4] Write Section 4 "API Call Patterns" in `docs/DESIGN_SYSTEM.md` — document the fetch wrapper usage (import path, method signatures), response shapes with TypeScript examples, error handling flow (401 redirect, network errors, validation errors), when to use each HTTP method, how to handle multipart/file uploads, and the rule that no raw `fetch()` calls are permitted (FR-018)
 
 **Checkpoint**: User Story 4 complete — API wrapper exists, compiles cleanly, and is documented.
 
@@ -111,7 +111,7 @@
 
 ### Implementation for User Story 5
 
-- [ ] T012 [P] [US5] Write Section 5 "Navigation Patterns" in `docs/DESIGN_SYSTEM.md` — document sidebar active state styling (which tokens: `bg-accent text-accent-foreground` for active, `text-muted-foreground` for inactive per FR-019), mobile navigation behavior (hamburger → sidebar slide-in from left, `fixed inset-0 z-30 bg-black/40` overlay, `transition-transform duration-200` per FR-020), and tab/pill navigation pattern for in-page section switching (active tab styling, inactive tab styling, recommended implementation per FR-021)
+- [x] T012 [P] [US5] Write Section 5 "Navigation Patterns" in `docs/DESIGN_SYSTEM.md` — document sidebar active state styling (which tokens: `bg-accent text-accent-foreground` for active, `text-muted-foreground` for inactive per FR-019), mobile navigation behavior (hamburger → sidebar slide-in from left, `fixed inset-0 z-30 bg-black/40` overlay, `transition-transform duration-200` per FR-020), and tab/pill navigation pattern for in-page section switching (active tab styling, inactive tab styling, recommended implementation per FR-021)
 
 **Checkpoint**: User Story 5 complete — navigation patterns are documented.
 
@@ -121,10 +121,10 @@
 
 **Purpose**: Build verification, visual verification, codebase hygiene checks, and final documentation assembly.
 
-- [ ] T013 [US1] Assemble `docs/DESIGN_SYSTEM.md` — ensure all 5 sections are present with a cohesive introduction, table of contents, and consistent formatting. Add a "Quick Reference" cheat sheet section at the top with the most commonly needed tokens and classes (FR-022)
-- [ ] T014 Run `tsc --noEmit` to verify TypeScript compilation passes with zero errors — specifically validates `src/lib/api/client.ts` types
-- [ ] T015 [P] Run `npm run lint` to verify zero ESLint warnings or errors across the codebase
-- [ ] T016 [P] Search codebase for raw `fetch()` calls in `src/components/` and `src/hooks/` directories — verify none exist (SC-004). Exclude `src/lib/api/client.ts` from the search since it is the wrapper itself
+- [x] T013 [US1] Assemble `docs/DESIGN_SYSTEM.md` — ensure all 5 sections are present with a cohesive introduction, table of contents, and consistent formatting. Add a "Quick Reference" cheat sheet section at the top with the most commonly needed tokens and classes (FR-022)
+- [x] T014 Run `tsc --noEmit` to verify TypeScript compilation passes with zero errors — specifically validates `src/lib/api/client.ts` types
+- [x] T015 [P] Run `npm run lint` to verify zero ESLint warnings or errors across the codebase
+- [x] T016 [P] Search codebase for raw `fetch()` calls in `src/components/` and `src/hooks/` directories — verify none exist (SC-004). Exclude `src/lib/api/client.ts` from the search since it is the wrapper itself
 - [ ] T017 Start dev server (`npm run dev`) and visually verify: primary buttons show violet color, sidebar active states use violet-tinted accent, focus rings are violet, hover transitions use consistent timing (SC-002, SC-006)
 
 **Checkpoint**: All verification items from quickstart.md are satisfied. Feature is complete.
