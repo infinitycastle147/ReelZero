@@ -3,6 +3,8 @@
 Auto-generated from all feature plans. Last updated: 2026-02-07
 
 ## Active Technologies
+- TypeScript 5+ (strict mode), Next.js 16+ (App Router) + Tailwind CSS v4, shadcn/ui (new-york style, neutral base), oklch color system (002-design-system)
+- N/A (no database in this feature) (002-design-system)
 
 - TypeScript 5+ (strict mode), Next.js 16+ (App Router) + `@clerk/nextjs` (auth SDK), `svix` (webhook verification), `lucide-react` (icons), `shadcn/ui` (UI components) (001-clerk-auth)
 
@@ -22,6 +24,7 @@ npm test && npm run lint
 TypeScript 5+ (strict mode), Next.js 16+ (App Router): Follow standard conventions
 
 ## Recent Changes
+- 002-design-system: Added TypeScript 5+ (strict mode), Next.js 16+ (App Router) + Tailwind CSS v4, shadcn/ui (new-york style, neutral base), oklch color system
 
 - 001-clerk-auth: Added TypeScript 5+ (strict mode), Next.js 16+ (App Router) + `@clerk/nextjs` (auth SDK), `svix` (webhook verification), `lucide-react` (icons), `shadcn/ui` (UI components)
 

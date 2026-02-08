@@ -5,6 +5,13 @@
 **Status**: Draft
 **Input**: User description: "F002 Design System & Frontend Standards from docs/features.md"
 
+## Clarifications
+
+### Session 2026-02-08
+
+- Q: What brand color hue should define ReelZero's visual identity? → A: Violet/Purple — conveys creativity and innovation, aligning with an AI-powered creative tool.
+- Q: Should the application use gradients, and if so, where? → A: Minimal gradients — only on CTA buttons and hero backgrounds. Flat/solid colors everywhere else.
+
 ## User Scenarios & Testing *(mandatory)*
 
 ### User Story 1 - Consistent Visual Identity Across All Pages (Priority: P1)
@@ -100,9 +107,9 @@ As a user moving between sections of the dashboard, I always know where I am. Th
 
 ### Functional Requirements
 
-- **FR-001**: The system MUST define a brand color palette extending the existing neutral tokens with at least a primary accent hue that provides visual identity beyond grayscale.
+- **FR-001**: The system MUST define a brand color palette extending the existing neutral tokens with a violet/purple primary accent hue that conveys creativity and innovation, providing visual identity beyond grayscale.
 - **FR-002**: The system MUST document color usage rules specifying when to use each semantic token: `primary` (CTAs, primary actions), `secondary` (secondary actions, less prominent UI), `accent` (highlights, active states), `muted` (disabled states, helper text), `destructive` (delete, error states).
-- **FR-003**: The system MUST define whether gradients are used in the application, and if so, provide gradient tokens for specific use cases. If gradients are not used, this MUST be documented as a conscious design decision.
+- **FR-003**: The system MUST use gradients minimally — limited to CTA buttons and hero section backgrounds only. All other UI elements MUST use flat/solid colors. Gradient tokens MUST be defined for these two use cases using the violet/purple palette.
 - **FR-004**: The system MUST define a shadow/elevation scale with at least three tiers (subtle, medium, prominent) and document which component types use each tier (cards = subtle, dropdowns = medium, modals = prominent).
 - **FR-005**: The system MUST document border-radius usage rules specifying which radius value applies to which component type (buttons, cards, inputs, modals, badges).
 - **FR-006**: The system MUST define three standard transition duration tiers: fast (~150ms), normal (~200ms), slow (~300ms).
