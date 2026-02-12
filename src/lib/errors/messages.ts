@@ -17,7 +17,7 @@ export const ERROR_MESSAGES: Record<ErrorCode, ErrorMeta> = {
   VALIDATION_MISSING_FIELD: { statusCode: 400, message: "Required field is missing" },
 
   // Credits
-  CREDIT_INSUFFICIENT: { statusCode: 403, message: "Insufficient credits" },
+  CREDIT_INSUFFICIENT: { statusCode: 402, message: "Out of credits — upgrade to continue" },
   CREDIT_RESERVATION_FAILED: { statusCode: 500, message: "Failed to reserve credit" },
 
   // Generation
@@ -38,13 +38,19 @@ export const ERROR_MESSAGES: Record<ErrorCode, ErrorMeta> = {
 
   // External
   EXTERNAL_API_ERROR: { statusCode: 502, message: "External service error" },
-  EXTERNAL_RATE_LIMITED: { statusCode: 503, message: "External service rate limit reached" },
+  EXTERNAL_RATE_LIMITED: { statusCode: 429, message: "Too many requests — please try again later" },
   EXTERNAL_TIMEOUT: { statusCode: 504, message: "External service timed out" },
 
   // Resources
   RESOURCE_NOT_FOUND: { statusCode: 404, message: "Resource not found" },
   RESOURCE_CONFLICT: { statusCode: 409, message: "Resource conflict" },
   RESOURCE_GONE: { statusCode: 410, message: "Resource no longer available" },
+
+  // Stripe / Billing
+  STRIPE_WEBHOOK_INVALID: { statusCode: 400, message: "Invalid Stripe webhook signature" },
+  STRIPE_CHECKOUT_FAILED: { statusCode: 502, message: "Failed to create Stripe checkout session" },
+  SUBSCRIPTION_NOT_FOUND: { statusCode: 404, message: "No subscription found for this user" },
+  SUBSCRIPTION_ALREADY_PAID: { statusCode: 409, message: "You already have an active subscription. Use 'Manage Subscription' to change your plan." },
 
   // Internal
   INTERNAL_ERROR: { statusCode: 500, message: "An unexpected error occurred" },

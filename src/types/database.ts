@@ -20,7 +20,7 @@ export type DbSubscription = {
   creditsTotal: number;
   currentPeriodStart: string;
   currentPeriodEnd: string;
-  status: "active" | "cancelled" | "past_due" | "trialing";
+  status: "active" | "canceled" | "past_due" | "trialing";
   createdAt: string;
   updatedAt: string;
 };

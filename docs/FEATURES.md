@@ -510,3 +510,24 @@ The core product experience. Wizard feeds into rendering.
 | F008 | Remotion Rendering Pipeline      | F007         | Very High  | 3     |
 | F009 | Video Dashboard & Library        | F008         | Medium     | 4     |
 | F010 | Landing Page                     | F001, F002   | Low-Medium | 4     |
+
+---
+
+## Code Review Notes for Future Features
+
+> Added from full codebase review (2026-02-09). These items belong to features not yet built and should be addressed when those features are specified/implemented.
+
+### F006 - Credit System & Stripe Billing
+- **Credit checks on generation routes**: API routes (`/api/video/generate`, `/api/video/images`, `/api/video/audio`) currently have no credit reservation or checking. F006 MUST add `reserveCredit()` calls before expensive AI operations in these routes, with `refundCredit()` on failure.
+- **Credit reservation race condition**: `checkCredits()` followed by `reserveCredit()` has a TOCTOU vulnerability. F006 should use `reserveCredit()` atomically as the single source of truth (call it first, check its boolean return).
+- **RPC null handling in subscriptions.ts**: `reserveCredit()` and `refundCredit()` cast RPC `data` to `boolean` without null checks. F006 should add null validation when implementing the credit flow.
+- **Missing `"expired"` in `DbSubscription.status` type**: The union type in `src/types/database.ts` lacks `"expired"`. F006 must add this when implementing subscription lifecycle.
+- **Rate limiting on API routes**: No per-user rate limiting exists. F006 should implement rate limiting middleware (e.g., upstash/ratelimit) to prevent cost overruns on AI endpoints.
+
+### F007 - Video Generation Wizard
+- **User ID validation against auth**: API routes accept `userId` from the request body without verifying it matches the Clerk-authenticated user. F007 MUST validate `body.userId === clerkUserId` or derive userId from auth context directly, never trusting client-provided values.
+- **Input length validation on prompts**: The `/api/video/generate` route only checks prompt presence, not length. F007 should enforce min/max length per spec (50-500 chars).
+- **Array length limits on scenes**: No limit on `body.scenes.length` in `/api/video/images`. F007 should cap to max scenes (5 per spec).
+
+### F009 - Video Dashboard & Library
+- **Dashboard page auth guards**: Current stub pages have no server-side auth checks. F009 should add `auth()` + redirect in each page component as defense-in-depth beyond middleware.

@@ -1,9 +1,12 @@
 "use client";
 
+import { useRouter } from "next/navigation";
 import { useEffect } from "react";
 
+import { PaymentFailedBanner } from "@/components/billing/payment-failed-banner";
 import { DashboardHeader } from "@/components/layout/dashboard-header";
 import { DashboardSidebar } from "@/components/layout/dashboard-sidebar";
+import { useCredits } from "@/hooks/useCredits";
 import { cn } from "@/lib/utils";
 import { useUIStore } from "@/store/ui-store";
 
@@ -12,8 +15,21 @@ export default function DashboardLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const router = useRouter();
   const isSidebarOpen = useUIStore((state) => state.isSidebarOpen);
   const toggleSidebar = useUIStore((state) => state.toggleSidebar);
+  const { status: subscriptionStatus } = useCredits();
+
+  async function handleUpdatePayment() {
+    try {
+      const response = await fetch("/api/subscription/portal", { method: "POST" });
+      if (!response.ok) return;
+      const json = (await response.json()) as { data: { portalUrl: string } };
+      router.push(json.data.portalUrl);
+    } catch {
+      // Silently fail — user can navigate to billing page manually
+    }
+  }
 
   // Auto-open sidebar on desktop, auto-close on mobile
   useEffect(() => {
@@ -42,6 +58,11 @@ export default function DashboardLayout({
     <div className="grid min-h-screen grid-rows-[auto_1fr]">
       {/* Header — full width */}
       <DashboardHeader />
+
+      {/* Payment failed banner — shown when subscription is past_due */}
+      {subscriptionStatus === "past_due" && (
+        <PaymentFailedBanner onUpdatePayment={handleUpdatePayment} />
+      )}
 
       {/* Body — sidebar + main content */}
       <div className="relative grid lg:grid-cols-[256px_1fr]">

@@ -2,11 +2,23 @@
 
 import { UserButton } from "@clerk/nextjs";
 import { Menu } from "lucide-react";
+import { useEffect } from "react";
 
+import { CreditDisplay } from "@/components/billing/credit-display";
+import { useCredits } from "@/hooks/useCredits";
 import { useUIStore } from "@/store/ui-store";
+import { useVideoStore } from "@/store/video-store";
 
 export function DashboardHeader() {
   const toggleSidebar = useUIStore((state) => state.toggleSidebar);
+  const credits = useCredits();
+  const setOnGenerationComplete = useVideoStore((state) => state.setOnGenerationComplete);
+
+  // Register credits refresh as the post-generation callback
+  useEffect(() => {
+    setOnGenerationComplete(credits.refresh);
+    return () => setOnGenerationComplete(null);
+  }, [credits.refresh, setOnGenerationComplete]);
 
   return (
     <header className="flex h-16 items-center justify-between border-b bg-background px-4 lg:px-6">
@@ -21,14 +33,22 @@ export function DashboardHeader() {
         </button>
         <span className="text-lg font-semibold tracking-tight">ReelZero</span>
       </div>
-      <UserButton
-        afterSignOutUrl="/sign-in"
-        appearance={{
-          elements: {
-            avatarBox: "h-8 w-8",
-          },
-        }}
-      />
+      <div className="flex items-center gap-3">
+        <CreditDisplay
+          creditsRemaining={credits.creditsRemaining}
+          creditsTotal={credits.creditsTotal}
+          isLoading={credits.isLoading}
+          status={credits.status}
+        />
+        <UserButton
+          afterSignOutUrl="/sign-in"
+          appearance={{
+            elements: {
+              avatarBox: "h-8 w-8",
+            },
+          }}
+        />
+      </div>
     </header>
   );
 }
