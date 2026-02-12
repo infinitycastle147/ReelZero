@@ -11,6 +11,8 @@ Auto-generated from all feature plans. Last updated: 2026-02-11
 - Supabase Storage (`images` bucket for scene images, `audio` bucket for TTS MP3s) + Supabase PostgreSQL (`generation_logs`, `uploaded_images` tables) (004-ai-services)
 - TypeScript 5+ (strict mode), Next.js 16+ (App Router) + `stripe` ^14.0.0 (new), `@clerk/nextjs` (existing), `@supabase/supabase-js` (existing), `svix` (existing for Clerk webhook; Stripe uses its own `stripe.webhooks.constructEvent`) (006-credit-billing)
 - Supabase PostgreSQL (`subscriptions` table + new `stripe_webhook_events` table) (006-credit-billing)
+- TypeScript 5+ strict mode + Next.js 16+ (App Router), React 18+, Zustand (existing), shadcn/ui (new-york / neutral), Tailwind CSS v4, `@dnd-kit/core` + `@dnd-kit/sortable` (new — scene reordering), native HTML5 file upload (no new library), `zustand/middleware` persist (new — draft persistence) (007-video-wizard)
+- Supabase Storage (images bucket for scene images — already provisioned by F003) (007-video-wizard)
 
 - TypeScript 5+ (strict mode), Next.js 16+ (App Router) + `@clerk/nextjs` (auth SDK), `svix` (webhook verification), `lucide-react` (icons), `shadcn/ui` (UI components) (001-clerk-auth)
 
@@ -30,9 +32,9 @@ npm test && npm run lint
 TypeScript 5+ (strict mode), Next.js 16+ (App Router): Follow standard conventions
 
 ## Recent Changes
+- 007-video-wizard: Added TypeScript 5+ strict mode + Next.js 16+ (App Router), React 18+, Zustand (existing), shadcn/ui (new-york / neutral), Tailwind CSS v4, `@dnd-kit/core` + `@dnd-kit/sortable` (new — scene reordering), `react-dropzone` (new — image upload), `zustand/middleware` persist (new — draft persistence)
 - 006-credit-billing: Added TypeScript 5+ (strict mode), Next.js 16+ (App Router) + `stripe` ^14.0.0 (new), `@clerk/nextjs` (existing), `@supabase/supabase-js` (existing), `svix` (existing for Clerk webhook; Stripe uses its own `stripe.webhooks.constructEvent`)
 - 004-ai-services: Added TypeScript 5+ (strict mode), Next.js 16+ (App Router) + `sharp` (v0.34.5, already installed), `@supabase/supabase-js` (existing), `@clerk/nextjs` (existing)
-- 003-database-user-sync: Added TypeScript 5+ (strict mode), Next.js 16+ (App Router) + `@supabase/supabase-js` (new), `svix` (existing, webhook verification), `@clerk/nextjs` (existing)
 
 
 <!-- MANUAL ADDITIONS START -->

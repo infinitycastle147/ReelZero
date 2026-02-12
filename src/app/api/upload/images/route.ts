@@ -9,6 +9,7 @@ import { withErrorHandler } from "@/lib/errors/middleware";
 
 export const runtime = "nodejs";
 
+// userId is derived from auth() — NOT accepted from form data (F007 security patch)
 export const POST = withErrorHandler(async (request: NextRequest) => {
   const { userId: clerkUserId } = await auth();
 
@@ -18,26 +19,22 @@ export const POST = withErrorHandler(async (request: NextRequest) => {
 
   const formData = await request.formData();
   const file = formData.get("file");
-  const userId = formData.get("userId");
   const videoId = formData.get("videoId");
 
   if (!file || !(file instanceof File)) {
     throw new AppError(ERROR_CODES.VALIDATION_MISSING_FIELD, "file is required");
   }
 
-  if (!userId || typeof userId !== "string") {
-    throw new AppError(ERROR_CODES.VALIDATION_MISSING_FIELD, "userId is required");
-  }
-
   // Convert File to Buffer
   const arrayBuffer = await file.arrayBuffer();
   const buffer = Buffer.from(arrayBuffer);
 
+  // uploadUserImage validates MIME type, file size, resizes to TARGET_IMAGE_WIDTH x TARGET_IMAGE_HEIGHT (FR-017)
   const result = await uploadUserImage({
     file: buffer,
     originalFilename: file.name,
     mimeType: file.type,
-    userId,
+    userId: clerkUserId,
     videoId: typeof videoId === "string" ? videoId : undefined,
   });
 
