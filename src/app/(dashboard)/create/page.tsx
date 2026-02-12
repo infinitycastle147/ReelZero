@@ -1,10 +1,26 @@
-export default function CreateVideoPage() {
+import { auth } from "@clerk/nextjs/server";
+import { redirect } from "next/navigation";
+
+import { VideoWizard } from "@/components/video/video-wizard";
+
+// Server Component — auth check + render boundary
+export default async function CreateVideoPage() {
+  const { userId } = await auth();
+
+  if (!userId) {
+    redirect("/sign-in");
+  }
+
   return (
-    <div>
-      <h1 className="text-3xl font-bold">Create Video</h1>
-      <p className="mt-2 text-muted-foreground">
-        Generate a new AI-powered video from a text prompt.
-      </p>
+    <div className="px-4 py-8 sm:px-6 lg:px-8">
+      <div className="mb-8 space-y-1">
+        <h1 className="text-2xl font-bold tracking-tight">Create Video</h1>
+        <p className="text-muted-foreground">
+          Generate an AI-powered short-form video from a text prompt.
+        </p>
+      </div>
+
+      <VideoWizard />
     </div>
   );
 }

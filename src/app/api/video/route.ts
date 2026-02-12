@@ -2,13 +2,13 @@ import { auth } from "@clerk/nextjs/server";
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 
-import { generateScript } from "@/lib/ai/script-generation";
 import type { ScriptTheme } from "@/lib/ai/types";
 import { PROMPT_MAX_LENGTH, PROMPT_MIN_LENGTH } from "@/lib/constants/ai";
-import { checkCredits, refundCredit, reserveCredit } from "@/lib/db/queries/subscriptions";
+import { createVideo } from "@/lib/db/queries/videos";
 import { AppError } from "@/lib/errors/app-error";
 import { ERROR_CODES } from "@/lib/errors/codes";
 import { withErrorHandler } from "@/lib/errors/middleware";
+import type { CaptionStyle } from "@/types/scene";
 
 const VALID_THEMES: ScriptTheme[] = [
   "realistic",
@@ -18,10 +18,17 @@ const VALID_THEMES: ScriptTheme[] = [
   "minimalist",
 ];
 
-type GenerateRequestBody = {
+const VALID_CAPTION_STYLES: CaptionStyle[] = [
+  "word-by-word",
+  "full-sentence",
+  "none",
+];
+
+type CreateVideoRequest = {
   prompt: string;
   theme: ScriptTheme;
-  videoId: string;
+  voice: string;
+  captionStyle: CaptionStyle;
 };
 
 export const POST = withErrorHandler(async (request: NextRequest) => {
@@ -31,13 +38,12 @@ export const POST = withErrorHandler(async (request: NextRequest) => {
     throw new AppError(ERROR_CODES.AUTH_UNAUTHORIZED);
   }
 
-  const body = (await request.json()) as GenerateRequestBody;
+  const body = (await request.json()) as CreateVideoRequest;
 
   if (!body.prompt || typeof body.prompt !== "string") {
     throw new AppError(ERROR_CODES.VALIDATION_MISSING_FIELD, "prompt is required");
   }
 
-  // Route-level prompt length guard (FR-004 — AI layer also validates but route must return correct error code)
   if (
     body.prompt.length < PROMPT_MIN_LENGTH ||
     body.prompt.length > PROMPT_MAX_LENGTH
@@ -51,37 +57,31 @@ export const POST = withErrorHandler(async (request: NextRequest) => {
   if (!body.theme || !VALID_THEMES.includes(body.theme)) {
     throw new AppError(
       ERROR_CODES.VALIDATION_INVALID_INPUT,
-      `theme must be one of: ${VALID_THEMES.join(", ")}`,
+      `theme must be one of: ${VALID_THEMES.join(", ")}`
     );
   }
 
-  if (!body.videoId || typeof body.videoId !== "string") {
-    throw new AppError(ERROR_CODES.VALIDATION_MISSING_FIELD, "videoId is required");
+  if (!body.voice || typeof body.voice !== "string") {
+    throw new AppError(ERROR_CODES.VALIDATION_MISSING_FIELD, "voice is required");
   }
 
-  // Credit enforcement: check and reserve before any AI calls (FR-006, FR-007)
-  const creditCheck = await checkCredits(userId);
-  if (!creditCheck.canGenerate) {
-    throw new AppError(ERROR_CODES.CREDIT_INSUFFICIENT);
+  if (!body.captionStyle || !VALID_CAPTION_STYLES.includes(body.captionStyle)) {
+    throw new AppError(
+      ERROR_CODES.VALIDATION_INVALID_INPUT,
+      `captionStyle must be one of: ${VALID_CAPTION_STYLES.join(", ")}`
+    );
   }
 
-  const reserved = await reserveCredit(userId);
-  if (!reserved) {
-    throw new AppError(ERROR_CODES.CREDIT_INSUFFICIENT);
-  }
-
-  let script;
-  try {
-    script = await generateScript({
-      prompt: body.prompt,
+  const video = await createVideo({
+    user_id: userId,
+    title: body.prompt.substring(0, 100),
+    prompt: body.prompt,
+    metadata: {
+      voice: body.voice,
       theme: body.theme,
-      videoId: body.videoId,
-    });
-  } catch (err) {
-    // Refund credit on any generation failure
-    await refundCredit(userId);
-    throw err;
-  }
+      captionStyle: body.captionStyle,
+    },
+  });
 
-  return NextResponse.json({ data: script });
+  return NextResponse.json({ data: { videoId: video.id } }, { status: 201 });
 });

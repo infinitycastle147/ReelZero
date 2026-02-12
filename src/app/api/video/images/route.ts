@@ -4,6 +4,7 @@ import type { NextRequest } from "next/server";
 
 import { generateSceneImages } from "@/lib/ai/scene-image-generation";
 import type { ScriptTheme, GenerateSceneImageInput } from "@/lib/ai/types";
+import { MAX_SCENES } from "@/lib/constants/video";
 import { AppError } from "@/lib/errors/app-error";
 import { ERROR_CODES } from "@/lib/errors/codes";
 import { withErrorHandler } from "@/lib/errors/middleware";
@@ -13,11 +14,11 @@ type SceneInput = {
   sceneNumber: number;
 };
 
+// userId removed from request body — derived from auth() server-side (F007 security patch)
 type ImagesRequestBody = {
   scenes: SceneInput[];
   theme: ScriptTheme;
   videoId: string;
-  userId: string;
 };
 
 export const POST = withErrorHandler(async (request: NextRequest) => {
@@ -33,6 +34,14 @@ export const POST = withErrorHandler(async (request: NextRequest) => {
     throw new AppError(ERROR_CODES.VALIDATION_MISSING_FIELD, "scenes array is required");
   }
 
+  // Cap scene count to MAX_SCENES (FR-026 security guard)
+  if (body.scenes.length > MAX_SCENES) {
+    throw new AppError(
+      ERROR_CODES.VALIDATION_INVALID_INPUT,
+      `scenes array must not exceed ${MAX_SCENES} scenes`
+    );
+  }
+
   if (!body.theme || typeof body.theme !== "string") {
     throw new AppError(ERROR_CODES.VALIDATION_MISSING_FIELD, "theme is required");
   }
@@ -41,16 +50,12 @@ export const POST = withErrorHandler(async (request: NextRequest) => {
     throw new AppError(ERROR_CODES.VALIDATION_MISSING_FIELD, "videoId is required");
   }
 
-  if (!body.userId || typeof body.userId !== "string") {
-    throw new AppError(ERROR_CODES.VALIDATION_MISSING_FIELD, "userId is required");
-  }
-
-  // Map request body to GenerateSceneImageInput[]
+  // Map request body to GenerateSceneImageInput[] — userId derived from auth() above
   const inputs: GenerateSceneImageInput[] = body.scenes.map((scene) => ({
     visualDescription: scene.visualDescription,
     theme: body.theme,
     videoId: body.videoId,
-    userId: body.userId,
+    userId: clerkUserId,
     sceneNumber: scene.sceneNumber,
   }));
 
