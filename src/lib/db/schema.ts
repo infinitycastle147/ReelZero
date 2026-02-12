@@ -28,13 +28,14 @@ export type Subscription = {
   id: string;
   user_id: string;
   tier: "free" | "basic" | "pro" | "enterprise";
-  status: "active" | "cancelled" | "expired";
+  status: "active" | "canceled" | "past_due" | "trialing";
   credits_total: number;
   credits_used: number;
   credits_remaining: number; // computed column, read-only
   billing_cycle_start: string | null;
   billing_cycle_end: string | null;
   stripe_subscription_id: string | null;
+  stripe_customer_id: string | null;
   created_at: string;
   updated_at: string;
 };
@@ -48,6 +49,7 @@ export type SubscriptionInsert = {
   billing_cycle_start?: string;
   billing_cycle_end?: string;
   stripe_subscription_id?: string;
+  stripe_customer_id?: string;
 };
 
 export type SubscriptionUpdate = Partial<
@@ -60,8 +62,17 @@ export type SubscriptionUpdate = Partial<
     | "billing_cycle_start"
     | "billing_cycle_end"
     | "stripe_subscription_id"
+    | "stripe_customer_id"
   >
 >;
+
+// ── Stripe Webhook Events ───────────────────────────────────────────────────────
+
+export type StripeWebhookEvent = {
+  id: string;          // Stripe evt_...
+  type: string;
+  processed_at: string;
+};
 
 // ── Videos ─────────────────────────────────────────────────────────────────────
 

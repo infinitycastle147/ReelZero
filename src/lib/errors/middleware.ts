@@ -21,6 +21,7 @@ export function withErrorHandler(handler: RouteHandler): RouteHandler {
         });
       }
 
+      console.error("[withErrorHandler] Unhandled error:", error);
       const fallback = ERROR_MESSAGES[ERROR_CODES.INTERNAL_ERROR];
       return NextResponse.json(
         {

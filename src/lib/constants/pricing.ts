@@ -16,10 +16,10 @@ export const PRICING_TIERS = Object.freeze([
   {
     id: "basic",
     name: "Basic",
-    monthlyPrice: 900,
-    annualPrice: 9000,
-    creditsPerMonth: 15,
-    storageQuotaMb: 2048,
+    monthlyPrice: 2900,
+    annualPrice: 28900,
+    creditsPerMonth: 30,
+    storageQuotaMb: 5120,
     features: {
       hasWatermark: false,
       maxResolution: "1080p",
@@ -30,10 +30,10 @@ export const PRICING_TIERS = Object.freeze([
   {
     id: "pro",
     name: "Pro",
-    monthlyPrice: 2900,
-    annualPrice: 29000,
-    creditsPerMonth: 50,
-    storageQuotaMb: 10240,
+    monthlyPrice: 7900,
+    annualPrice: 78900,
+    creditsPerMonth: 100,
+    storageQuotaMb: 20480,
     features: {
       hasWatermark: false,
       maxResolution: "1080p",
@@ -44,10 +44,10 @@ export const PRICING_TIERS = Object.freeze([
   {
     id: "enterprise",
     name: "Enterprise",
-    monthlyPrice: 7900,
-    annualPrice: 79000,
-    creditsPerMonth: 200,
-    storageQuotaMb: 51200,
+    monthlyPrice: 0,
+    annualPrice: 0,
+    creditsPerMonth: 999,
+    storageQuotaMb: 102400,
     features: {
       hasWatermark: false,
       maxResolution: "1080p",

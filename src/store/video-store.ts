@@ -12,6 +12,8 @@ type VideoStoreState = {
   scenes: Scene[];
   isGenerating: boolean;
   generationProgress: number;
+  // Credit refresh callback — set by DashboardHeader after mount
+  onGenerationComplete: (() => void) | null;
 };
 
 type VideoStoreActions = {
@@ -26,6 +28,8 @@ type VideoStoreActions = {
   addScene: () => void;
   removeScene: (id: string) => void;
   reset: () => void;
+  setOnGenerationComplete: (callback: (() => void) | null) => void;
+  notifyGenerationComplete: () => void;
 };
 
 const INITIAL_STATE: VideoStoreState = {
@@ -38,6 +42,7 @@ const INITIAL_STATE: VideoStoreState = {
   scenes: [],
   isGenerating: false,
   generationProgress: 0,
+  onGenerationComplete: null,
 };
 
 export const useVideoStore = create<VideoStoreState & VideoStoreActions>()(
@@ -89,5 +94,12 @@ export const useVideoStore = create<VideoStoreState & VideoStoreActions>()(
       })),
 
     reset: () => set(INITIAL_STATE),
+
+    setOnGenerationComplete: (callback) => set({ onGenerationComplete: callback }),
+
+    notifyGenerationComplete: () => {
+      const { onGenerationComplete } = useVideoStore.getState();
+      onGenerationComplete?.();
+    },
   })
 );

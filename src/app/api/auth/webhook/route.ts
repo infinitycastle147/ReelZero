@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 import { Webhook } from "svix";
 
-import { createFreeSubscription, updateSubscription } from "@/lib/db/queries/subscriptions";
+import { createFreeSubscription, revertToFreeTier } from "@/lib/db/queries/subscriptions";
 import { createUser, getUserByClerkIdIncludeDeleted, updateUser, softDeleteUser } from "@/lib/db/queries/users";
 import { AppError } from "@/lib/errors/app-error";
 import { ERROR_CODES } from "@/lib/errors/codes";
@@ -80,11 +80,12 @@ export const POST = withErrorHandler(async (request: NextRequest) => {
   } else if (type === "user.updated") {
     await updateUser(clerkUserId, { email, name });
   } else if (type === "user.deleted") {
-    // Fetch user before soft-deleting so we can expire their subscription
+    // Fetch user before soft-deleting so we can cancel their subscription
     const user = await getUserByClerkIdIncludeDeleted(clerkUserId);
     await softDeleteUser(clerkUserId);
     if (user) {
-      await updateSubscription(user.id, { status: "expired" });
+      // Revert to free tier — same behaviour as Stripe subscription cancellation
+      await revertToFreeTier(user.id);
     }
   }
 
