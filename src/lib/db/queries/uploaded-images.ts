@@ -75,3 +75,10 @@ export async function deleteUploadedImage(id: string): Promise<void> {
     throw new AppError(ERROR_CODES.INTERNAL_ERROR, error.message);
   }
 }
+
+export async function deleteUploadedImagesByVideoId(videoId: string): Promise<void> {
+  const images = await listImagesByVideoId(videoId);
+  for (const image of images) {
+    await deleteUploadedImage(image.id);
+  }
+}

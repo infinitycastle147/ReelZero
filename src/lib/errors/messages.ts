@@ -35,6 +35,7 @@ export const ERROR_MESSAGES: Record<ErrorCode, ErrorMeta> = {
   STORAGE_UPLOAD_FAILED: { statusCode: 500, message: "File upload failed" },
   STORAGE_QUOTA_EXCEEDED: { statusCode: 507, message: "Storage quota exceeded" },
   STORAGE_FILE_NOT_FOUND: { statusCode: 404, message: "File not found in storage" },
+  STORAGE_DELETE_FAILED: { statusCode: 500, message: "Failed to delete video files. Please try again." },
 
   // External
   EXTERNAL_API_ERROR: { statusCode: 502, message: "External service error" },

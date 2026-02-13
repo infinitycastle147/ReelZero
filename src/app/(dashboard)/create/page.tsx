@@ -1,5 +1,6 @@
 import { auth } from "@clerk/nextjs/server";
 import { redirect } from "next/navigation";
+import { Suspense } from "react";
 
 import { VideoWizard } from "@/components/video/video-wizard";
 
@@ -20,7 +21,10 @@ export default async function CreateVideoPage() {
         </p>
       </div>
 
-      <VideoWizard />
+      {/* Suspense required because VideoWizard uses useSearchParams (T030a) */}
+      <Suspense>
+        <VideoWizard />
+      </Suspense>
     </div>
   );
 }

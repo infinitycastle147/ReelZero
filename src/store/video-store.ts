@@ -3,6 +3,7 @@ import { create } from "zustand";
 import { persist, type StorageValue } from "zustand/middleware";
 
 import { MIN_SCENES } from "@/lib/constants/video";
+import type { RenderStage } from "@/types/render";
 import type { CaptionStyle, ImageStatus, Scene, TransitionType } from "@/types/scene";
 
 type VideoStoreState = {
@@ -21,6 +22,9 @@ type VideoStoreState = {
   videoId: string | null;
   // F007: hydration guard — set to true by onRehydrateStorage callback
   _hasHydrated: boolean;
+  // F008: render pipeline state — NOT persisted in sessionStorage
+  renderStatus: RenderStage | null;
+  renderError: string | null;
 };
 
 type VideoStoreActions = {
@@ -42,6 +46,18 @@ type VideoStoreActions = {
   reorderScenes: (activeId: string, overId: string) => void;
   setSceneImageStatus: (id: string, status: ImageStatus) => void;
   setHasHydrated: (value: boolean) => void;
+  // F008: render state actions
+  setRenderStatus: (status: RenderStage | null) => void;
+  setRenderError: (error: string | null) => void;
+  clearRenderState: () => void;
+  // F009: T030a — pre-fill wizard from a previous video for regeneration
+  prefillFromVideo: (data: {
+    prompt: string;
+    voice?: string;
+    theme?: string;
+    captionStyle?: CaptionStyle;
+    transitionType?: TransitionType;
+  }) => void;
 };
 
 const INITIAL_STATE: VideoStoreState = {
@@ -57,6 +73,9 @@ const INITIAL_STATE: VideoStoreState = {
   onGenerationComplete: null,
   videoId: null,
   _hasHydrated: false,
+  // F008: render state — never persisted
+  renderStatus: null,
+  renderError: null,
 };
 
 type StoreState = VideoStoreState & VideoStoreActions;
@@ -191,6 +210,31 @@ export const useVideoStore = create<VideoStoreState & VideoStoreActions>()(
         })),
 
       setHasHydrated: (value) => set({ _hasHydrated: value }),
+
+      // F008: render state actions (not persisted)
+      setRenderStatus: (status) => set({ renderStatus: status }),
+      setRenderError: (error) => set({ renderError: error }),
+      clearRenderState: () => set({ renderStatus: null, renderError: null }),
+
+      // F009: T030a — reset to step 1 and pre-fill with prior video's settings
+      prefillFromVideo: (data) => {
+        if (typeof window !== "undefined") {
+          try {
+            window.sessionStorage.removeItem("reelzero-video-wizard-draft");
+          } catch {
+            // fail silently
+          }
+        }
+        set({
+          ...INITIAL_STATE,
+          _hasHydrated: true,
+          prompt: data.prompt,
+          selectedVoice: data.voice ?? null,
+          selectedTheme: data.theme ?? null,
+          captionStyle: data.captionStyle ?? "word-by-word",
+          transitionType: data.transitionType ?? "fade",
+        });
+      },
     }),
     {
       name: "reelzero-video-wizard-draft",

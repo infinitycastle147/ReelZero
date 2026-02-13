@@ -1,4 +1,5 @@
 import { createSupabaseAdmin } from "@/lib/db/client";
+import { getSubscriptionByUserId } from "@/lib/db/queries/subscriptions";
 import type {
   UsageEntry,
   UsageEntryInsert,
@@ -7,6 +8,7 @@ import type {
 } from "@/lib/db/schema";
 import { AppError } from "@/lib/errors/app-error";
 import { ERROR_CODES } from "@/lib/errors/codes";
+import type { UsageStats } from "@/types/video";
 
 export type UsageStatsResult = {
   totalCreditsUsed: number;
@@ -88,5 +90,66 @@ export async function getUsageStats(userId: string): Promise<UsageStatsResult> {
   return {
     totalCreditsUsed,
     actionCount: entries.length,
+  };
+}
+
+/**
+ * F009: Monthly usage stats for the dashboard (FR-013, US6).
+ * billingCycleStart is used as the "this month" window start.
+ * Falls back to calendar month start if not provided.
+ */
+export async function getMonthlyUsageStats(
+  userId: string,
+  billingCycleStart?: string
+): Promise<UsageStats> {
+  const supabase = createSupabaseAdmin();
+
+  // Resolve credit balance from subscriptions
+  const subscription = await getSubscriptionByUserId(userId);
+  const creditsRemaining = subscription?.credits_remaining ?? 0;
+  const creditsTotal = subscription?.credits_total ?? 0;
+  const creditsUsed = subscription?.credits_used ?? 0;
+
+  // Determine window start: billing cycle start or calendar month
+  let windowStart: string;
+  if (billingCycleStart) {
+    windowStart = billingCycleStart;
+  } else {
+    const now = new Date();
+    windowStart = new Date(now.getFullYear(), now.getMonth(), 1).toISOString();
+  }
+
+  // Query video_generated actions since window start
+  const { data, error } = await supabase
+    .from("usage_tracking")
+    .select("created_at")
+    .eq("user_id", userId)
+    .eq("action", "video_generated")
+    .gte("created_at", windowStart);
+
+  if (error) {
+    throw new AppError(ERROR_CODES.INTERNAL_ERROR, error.message);
+  }
+
+  const entries = data ?? [];
+  const videosThisMonth = entries.length;
+
+  // Group by date (YYYY-MM-DD) for the bar chart
+  const countsByDate = new Map<string, number>();
+  for (const entry of entries) {
+    const date = entry.created_at.slice(0, 10); // "YYYY-MM-DD"
+    countsByDate.set(date, (countsByDate.get(date) ?? 0) + 1);
+  }
+
+  const dailyCounts = Array.from(countsByDate.entries())
+    .sort(([a], [b]) => a.localeCompare(b))
+    .map(([date, count]) => ({ date, count }));
+
+  return {
+    creditsRemaining,
+    creditsTotal,
+    creditsUsed,
+    videosThisMonth,
+    dailyCounts,
   };
 }
