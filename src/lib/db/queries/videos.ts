@@ -250,6 +250,8 @@ export async function getProcessingVideoByUserId(userId: string): Promise<Video 
     .select()
     .eq("user_id", userId)
     .eq("status", "processing")
+    .order("created_at", { ascending: false })
+    .limit(1)
     .maybeSingle();
 
   if (error) {
