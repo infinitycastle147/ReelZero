@@ -22,6 +22,12 @@
 .DS_Store
 *.pem
 
+# macOS Finder duplicates (e.g. "file 2.ts", "spec 2.md")
+*[0-9].md
+*[0-9].ts
+*[0-9].tsx
+*[0-9].sql
+
 # debug
 npm-debug.log*
 yarn-debug.log*
