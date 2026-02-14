@@ -1,0 +1,80 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "RenderJobPayload",
+  "description": "Payload sent from main app POST /api/video/render to the ReelZero-Renderer microservice POST /render",
+  "type": "object",
+  "required": ["videoId", "userId", "audioUrl", "scenes", "captionStyle", "transitionType", "callbackUrl"],
+  "properties": {
+    "videoId": {
+      "type": "string",
+      "format": "uuid",
+      "description": "Video record ID from the videos table"
+    },
+    "userId": {
+      "type": "string",
+      "description": "Clerk user ID — used for watermark tier check"
+    },
+    "audioUrl": {
+      "type": "string",
+      "format": "uri",
+      "description": "Signed Supabase URL for the generated MP3 audio file (1hr expiry)"
+    },
+    "scenes": {
+      "type": "array",
+      "description": "Sequential scene data in display order",
+      "minItems": 3,
+      "maxItems": 5,
+      "items": {
+        "type": "object",
+        "required": ["sceneNumber", "imageUrl", "durationInFrames", "wordTimings"],
+        "properties": {
+          "sceneNumber": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 5
+          },
+          "imageUrl": {
+            "type": "string",
+            "format": "uri",
+            "description": "Signed Supabase URL for the scene image (1080x1920)"
+          },
+          "durationInFrames": {
+            "type": "integer",
+            "minimum": 1,
+            "description": "Scene duration in frames at 30fps, derived from audio alignment"
+          },
+          "wordTimings": {
+            "type": "array",
+            "description": "Per-word timing in absolute global frames",
+            "items": {
+              "type": "object",
+              "required": ["word", "startFrame", "endFrame"],
+              "properties": {
+                "word": { "type": "string" },
+                "startFrame": { "type": "integer", "minimum": 0 },
+                "endFrame": { "type": "integer", "minimum": 0 }
+              }
+            }
+          }
+        }
+      }
+    },
+    "captionStyle": {
+      "type": "string",
+      "enum": ["word-by-word", "full-sentence", "none"]
+    },
+    "transitionType": {
+      "type": "string",
+      "enum": ["fade", "crossfade"]
+    },
+    "showWatermark": {
+      "type": "boolean",
+      "description": "True for free-tier users"
+    },
+    "callbackUrl": {
+      "type": "string",
+      "format": "uri",
+      "description": "URL the renderer POSTs to when the job completes or fails (POST /api/video/render/complete)"
+    }
+  }
+}

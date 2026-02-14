@@ -27,8 +27,6 @@ type GeminiImageResponse = {
 const SAFETY_FINISH_REASONS = ["SAFETY", "RECITATION"];
 
 export async function generateImage(input: ImageGenerationInput): Promise<ImageGenerationOutput> {
-  const aspectRatio = input.options?.aspectRatio ?? "1:1";
-
   const requestBody = {
     contents: [
       {
@@ -36,10 +34,7 @@ export async function generateImage(input: ImageGenerationInput): Promise<ImageG
       },
     ],
     generationConfig: {
-      responseModalities: ["IMAGE"],
-      imagenConfig: {
-        aspectRatio,
-      },
+      responseModalities: ["TEXT", "IMAGE"],
     },
   };
 

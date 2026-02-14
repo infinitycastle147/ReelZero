@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
@@ -49,6 +49,14 @@ export function Step1Input() {
 
   const { createAndGenerateScript, error } = useVideoGeneration();
   const [touched, setTouched] = useState(false);
+
+  // Clear any stale isGenerating=true left from a crashed previous attempt
+  useEffect(() => {
+    if (isGenerating) {
+      useVideoStore.setState({ isGenerating: false });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const promptLength = prompt.length;
   const isPromptValid =

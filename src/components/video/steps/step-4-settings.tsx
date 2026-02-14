@@ -1,6 +1,6 @@
 "use client";
 
-import { useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
 
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
@@ -12,6 +12,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Separator } from "@/components/ui/separator";
+import { apiClient } from "@/lib/api/client";
 import { useCredits } from "@/hooks/useCredits";
 import { useVideoGeneration } from "@/hooks/useVideoGeneration";
 import { useVideoStore } from "@/store/video-store";
@@ -22,8 +23,9 @@ const TRANSITION_OPTIONS: { value: TransitionType; label: string }[] = [
   { value: "crossfade", label: "Crossfade" },
 ];
 
+type ProcessingVideoData = { videoId: string | null; status: string | null };
+
 export function Step4Settings() {
-  const router = useRouter();
   const {
     prompt,
     scenes,
@@ -33,20 +35,49 @@ export function Step4Settings() {
     transitionType,
     setTransitionType,
     setStep,
+    setVideoId,
     reset,
   } = useVideoStore();
 
   const { canGenerate, creditsRemaining, isLoading: creditsLoading } = useCredits();
   const { submitVideoJob, error } = useVideoGeneration();
 
+  // Check if the user already has a render in flight from a previous/current session
+  const [processingVideoId, setProcessingVideoId] = useState<string | null>(null);
+  const [checkingProcessing, setCheckingProcessing] = useState(true);
+
+  useEffect(() => {
+    let cancelled = false;
+    async function checkProcessing() {
+      const response = await apiClient.get<ProcessingVideoData>("/api/video/render");
+      if (!cancelled && !response.error && response.data.videoId) {
+        setProcessingVideoId(response.data.videoId);
+      }
+      if (!cancelled) setCheckingProcessing(false);
+    }
+    void checkProcessing();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  const handleResumeProgress = () => {
+    if (processingVideoId) {
+      setVideoId(processingVideoId);
+      setStep(5);
+    }
+  };
+
+  const handleStartFresh = () => {
+    reset();
+  };
+
   const handleBack = () => setStep(3);
 
   const handleSubmit = async () => {
     const success = await submitVideoJob();
     if (success) {
-      // Clear wizard state and draft (persist.clearStorage happens inside reset())
-      reset();
-      router.push("/dashboard");
+      setStep(5);
     }
   };
 
@@ -56,6 +87,41 @@ export function Step4Settings() {
       : captionStyle === "full-sentence"
         ? "Full Sentence"
         : "None";
+
+  // Show the in-progress banner instead of the normal UI while we're still checking
+  // or when we've confirmed a render is already running
+  if (checkingProcessing) {
+    return (
+      <div className="flex items-center justify-center py-12">
+        <p className="text-sm text-muted-foreground">Checking generation status…</p>
+      </div>
+    );
+  }
+
+  if (processingVideoId) {
+    return (
+      <div className="space-y-6">
+        <div className="rounded-lg border border-amber-200 bg-amber-50 p-5 dark:border-amber-800 dark:bg-amber-950">
+          <h3 className="text-sm font-semibold text-amber-900 dark:text-amber-100">
+            A video is already being generated
+          </h3>
+          <p className="mt-1 text-sm text-amber-800 dark:text-amber-200">
+            You can only generate one video at a time. Watch its progress or discard it and start
+            fresh.
+          </p>
+        </div>
+
+        <div className="flex flex-col gap-3 sm:flex-row">
+          <Button className="flex-1" onClick={handleResumeProgress}>
+            Watch Progress
+          </Button>
+          <Button variant="outline" className="flex-1" onClick={handleStartFresh}>
+            Discard &amp; Start Fresh
+          </Button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -124,10 +190,7 @@ export function Step4Settings() {
           ) : (
             <p className="text-sm text-destructive">
               You have no credits remaining.{" "}
-              <a
-                href="/billing"
-                className="underline hover:no-underline font-medium"
-              >
+              <a href="/billing" className="font-medium underline hover:no-underline">
                 Upgrade your plan
               </a>{" "}
               to continue.

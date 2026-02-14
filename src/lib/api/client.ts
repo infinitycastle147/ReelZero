@@ -121,8 +121,10 @@ async function request<T>(
     }
 
     // --- Success ------------------------------------------------------------
-    const data = (await response.json()) as T;
-    return { data, error: null };
+    // Server always wraps payloads as { data: T } — unwrap here so callers
+    // receive T directly via response.data (single source of truth).
+    const responseBody = (await response.json()) as { data: T };
+    return { data: responseBody.data, error: null };
   } catch (error: unknown) {
     // --- Network / abort errors ---------------------------------------------
     if (error instanceof DOMException && error.name === "AbortError") {

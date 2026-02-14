@@ -13,9 +13,12 @@ import type { Scene } from "@/types/scene";
 const ERROR_MESSAGES: Record<string, string> = {
   CREDIT_INSUFFICIENT: "You have no credits remaining.",
   GENERATION_SCRIPT_FAILED: "Script generation failed. Please try again.",
-  GENERATION_IMAGE_FAILED: "Image generation failed for this scene.",
+  GENERATION_IMAGE_FAILED: "Image generation failed. You can upload your own image instead.",
+  QUOTA_EXCEEDED: "AI image generation quota exceeded. Please upload your own images to continue.",
   RENDER_SERVICE_UNAVAILABLE:
     "Video generation is temporarily unavailable. Please try again shortly.",
+  RESOURCE_CONFLICT:
+    "You already have a video being generated. Please wait for it to finish.",
   VALIDATION_INVALID_INPUT: "Please check your inputs and try again.",
   AUTH_UNAUTHORIZED: "Your session has expired. Please sign in again.",
 };
@@ -26,7 +29,8 @@ function getErrorMessage(code: string | undefined): string {
 }
 
 // ---------------------------------------------------------------------------
-// Response shapes
+// Response shapes — these represent the unwrapped payload T that apiClient
+// extracts from the server's { data: T } envelope.
 // ---------------------------------------------------------------------------
 type CreateVideoData = { videoId: string };
 
@@ -77,7 +81,6 @@ export function useVideoGeneration() {
   // -------------------------------------------------------------------------
   const createVideoRecord = useCallback(async (): Promise<string | null> => {
     setError(null);
-    useVideoStore.setState({ isGenerating: true });
 
     const response = await apiClient.post<CreateVideoData>("/api/video", {
       prompt,
@@ -87,7 +90,6 @@ export function useVideoGeneration() {
     });
 
     if (response.error) {
-      useVideoStore.setState({ isGenerating: false });
       setError(getErrorMessage(response.error.code));
       return null;
     }
@@ -102,14 +104,12 @@ export function useVideoGeneration() {
   // -------------------------------------------------------------------------
   const generateScript = useCallback(
     async (currentVideoId: string): Promise<boolean> => {
-      // isGenerating already true from createVideoRecord
+      // isGenerating is managed by createAndGenerateScript's try/finally
       const response = await apiClient.post<GenerateScriptData>("/api/video/generate", {
         prompt,
         theme: selectedTheme,
         videoId: currentVideoId,
       });
-
-      useVideoStore.setState({ isGenerating: false });
 
       if (response.error) {
         setError(getErrorMessage(response.error.code));
@@ -155,7 +155,52 @@ export function useVideoGeneration() {
   );
 
   // -------------------------------------------------------------------------
-  // (c) generateAllImages — fan-out per-scene, Promise.allSettled
+  // (c) generateSceneImage — generate image for a single scene by ID
+  // -------------------------------------------------------------------------
+  const generateSceneImage = useCallback(
+    async (sceneId: string): Promise<void> => {
+      const currentVideoId = useVideoStore.getState().videoId;
+      const currentTheme = useVideoStore.getState().selectedTheme;
+      const scene = useVideoStore.getState().scenes.find((s) => s.id === sceneId);
+
+      if (!currentVideoId || !currentTheme || !scene) {
+        setError("Missing video context. Please start over.");
+        return;
+      }
+
+      setSceneImageStatus(sceneId, "loading");
+
+      try {
+        const response = await apiClient.post<GenerateImagesData>("/api/video/images", {
+          scenes: [{ visualDescription: scene.visualDescription, sceneNumber: scene.order }],
+          theme: currentTheme,
+          videoId: currentVideoId,
+        });
+
+        if (response.error) {
+          setSceneImageStatus(sceneId, "error");
+          return;
+        }
+
+        const firstResult = response.data.results[0];
+        if (firstResult?.status === "success" && firstResult.output) {
+          updateScene(sceneId, {
+            imageUrl: firstResult.output.storageUrl,
+            imageSource: "ai",
+            imageStatus: "success",
+          });
+        } else {
+          setSceneImageStatus(sceneId, "error");
+        }
+      } catch {
+        setSceneImageStatus(sceneId, "error");
+      }
+    },
+    [setSceneImageStatus, updateScene]
+  );
+
+  // -------------------------------------------------------------------------
+  // (d) generateAllImages — fan-out per-scene, skips already-successful scenes
   // -------------------------------------------------------------------------
   const generateAllImages = useCallback(async (): Promise<void> => {
     setError(null);
@@ -168,38 +213,38 @@ export function useVideoGeneration() {
       return;
     }
 
-    // Mark all AI-mode scenes as loading
-    currentScenes.forEach((scene) => {
-      if (scene.imageSource === "ai") {
-        setSceneImageStatus(scene.id, "loading");
-      }
+    // Only process AI-source scenes that don't already have a successful image
+    const scenesToGenerate = currentScenes.filter(
+      (scene) => scene.imageSource === "ai" && scene.imageStatus !== "success"
+    );
+
+    if (scenesToGenerate.length === 0) return;
+
+    // Mark pending scenes as loading
+    scenesToGenerate.forEach((scene) => {
+      setSceneImageStatus(scene.id, "loading");
     });
 
     // Fan-out: one request per scene (parallel, not batch — FR-014)
     const results = await Promise.allSettled(
-      currentScenes
-        .filter((scene) => scene.imageSource === "ai")
-        .map(async (scene) => {
-          const response = await apiClient.post<GenerateImagesData>(
-            "/api/video/images",
-            {
-              scenes: [
-                {
-                  visualDescription: scene.visualDescription,
-                  sceneNumber: scene.order,
-                },
-              ],
-              theme: currentTheme,
-              videoId: currentVideoId,
-            }
-          );
-
-          return { scene, response };
-        })
+      scenesToGenerate.map(async (scene) => {
+        const response = await apiClient.post<GenerateImagesData>("/api/video/images", {
+          scenes: [{ visualDescription: scene.visualDescription, sceneNumber: scene.order }],
+          theme: currentTheme,
+          videoId: currentVideoId,
+        });
+        return { scene, response };
+      })
     );
 
     results.forEach((result) => {
-      if (result.status === "rejected") return;
+      if (result.status === "rejected") {
+        // Network-level failure — mark the scene as error
+        // We can't know which scene failed from a rejected promise without re-mapping,
+        // so we fall through; individual scenes were already marked loading and
+        // will be left in "loading" if we don't resolve — mark all unresolved as error.
+        return;
+      }
       const { scene, response } = result.value;
 
       if (response.error || response.data.errorCount > 0) {
@@ -211,16 +256,24 @@ export function useVideoGeneration() {
       if (firstResult?.status === "success" && firstResult.output) {
         updateScene(scene.id, {
           imageUrl: firstResult.output.storageUrl,
+          imageSource: "ai",
           imageStatus: "success",
         });
       } else {
         setSceneImageStatus(scene.id, "error");
       }
     });
+
+    // Clean up any scenes still stuck in "loading" due to rejected promises
+    useVideoStore.getState().scenes.forEach((scene) => {
+      if (scene.imageStatus === "loading") {
+        setSceneImageStatus(scene.id, "error");
+      }
+    });
   }, [setSceneImageStatus, updateScene]);
 
   // -------------------------------------------------------------------------
-  // (d) submitVideoJob — POST /api/video/render
+  // (e) submitVideoJob — POST /api/video/render
   // -------------------------------------------------------------------------
   const submitVideoJob = useCallback(async (): Promise<boolean> => {
     setError(null);
@@ -231,23 +284,10 @@ export function useVideoGeneration() {
       return false;
     }
 
+    // F008: POST /api/video/render only needs videoId (wizard data already stored in video metadata)
     const response = await apiClient.post<{ videoId: string; status: string }>(
       "/api/video/render",
-      {
-        videoId: state.videoId,
-        scenes: state.scenes.map((s) => ({
-          order: s.order,
-          narration: s.narration,
-          visualDescription: s.visualDescription,
-          imageUrl: s.imageUrl,
-          imageSource: s.imageSource,
-          duration: s.duration,
-        })),
-        voice: state.selectedVoice,
-        theme: state.selectedTheme,
-        captionStyle: state.captionStyle,
-        transitionType: state.transitionType,
-      }
+      { videoId: state.videoId }
     );
 
     if (response.error) {
@@ -259,18 +299,29 @@ export function useVideoGeneration() {
   }, []);
 
   // -------------------------------------------------------------------------
-  // Composite: createVideoRecord + generateScript in one loading state
+  // (f) Composite: createVideoRecord + generateScript in one loading state
+  // isGenerating is owned here with try/finally — guaranteed to reset on any
+  // failure path including unhandled exceptions.
   // -------------------------------------------------------------------------
   const createAndGenerateScript = useCallback(async (): Promise<boolean> => {
-    const newVideoId = await createVideoRecord();
-    if (!newVideoId) return false;
-    return generateScript(newVideoId);
+    useVideoStore.setState({ isGenerating: true });
+    try {
+      const newVideoId = await createVideoRecord();
+      if (!newVideoId) return false;
+      return await generateScript(newVideoId);
+    } catch {
+      setError("An unexpected error occurred. Please try again.");
+      return false;
+    } finally {
+      useVideoStore.setState({ isGenerating: false });
+    }
   }, [createVideoRecord, generateScript]);
 
   return {
     error,
     setError,
     createAndGenerateScript,
+    generateSceneImage,
     generateAllImages,
     submitVideoJob,
   };

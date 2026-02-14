@@ -83,6 +83,8 @@ export type Video = {
   prompt: string;
   duration_seconds: number | null;
   status: "processing" | "completed" | "failed";
+  // F008: render pipeline stage (null when status is completed or failed)
+  current_stage: "audio" | "sync" | "render" | "finalize" | null;
   video_url: string | null;
   thumbnail_url: string | null;
   storage_path: string | null;
@@ -104,6 +106,7 @@ export type VideoUpdate = Partial<
     Video,
     | "title"
     | "status"
+    | "current_stage"
     | "video_url"
     | "thumbnail_url"
     | "storage_path"

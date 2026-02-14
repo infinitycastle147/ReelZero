@@ -5,6 +5,7 @@ import type { NextRequest } from "next/server";
 import { generateSceneImages } from "@/lib/ai/scene-image-generation";
 import type { ScriptTheme, GenerateSceneImageInput } from "@/lib/ai/types";
 import { MAX_SCENES } from "@/lib/constants/video";
+import { getUserByClerkId } from "@/lib/db/queries/users";
 import { AppError } from "@/lib/errors/app-error";
 import { ERROR_CODES } from "@/lib/errors/codes";
 import { withErrorHandler } from "@/lib/errors/middleware";
@@ -26,6 +27,12 @@ export const POST = withErrorHandler(async (request: NextRequest) => {
 
   if (!clerkUserId) {
     throw new AppError(ERROR_CODES.AUTH_UNAUTHORIZED);
+  }
+
+  // Resolve Clerk ID → Supabase UUID (uploaded_images.user_id + storage path are UUID-based)
+  const dbUser = await getUserByClerkId(clerkUserId);
+  if (!dbUser) {
+    throw new AppError(ERROR_CODES.AUTH_UNAUTHORIZED, "User not found");
   }
 
   const body = (await request.json()) as ImagesRequestBody;
@@ -50,12 +57,12 @@ export const POST = withErrorHandler(async (request: NextRequest) => {
     throw new AppError(ERROR_CODES.VALIDATION_MISSING_FIELD, "videoId is required");
   }
 
-  // Map request body to GenerateSceneImageInput[] — userId derived from auth() above
+  // Map request body to GenerateSceneImageInput[] — use Supabase UUID, not Clerk ID
   const inputs: GenerateSceneImageInput[] = body.scenes.map((scene) => ({
     visualDescription: scene.visualDescription,
     theme: body.theme,
     videoId: body.videoId,
-    userId: clerkUserId,
+    userId: dbUser.id,
     sceneNumber: scene.sceneNumber,
   }));
 

@@ -3,6 +3,7 @@ import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 
 import { uploadUserImage } from "@/lib/ai/image-upload";
+import { getUserByClerkId } from "@/lib/db/queries/users";
 import { AppError } from "@/lib/errors/app-error";
 import { ERROR_CODES } from "@/lib/errors/codes";
 import { withErrorHandler } from "@/lib/errors/middleware";
@@ -15,6 +16,12 @@ export const POST = withErrorHandler(async (request: NextRequest) => {
 
   if (!clerkUserId) {
     throw new AppError(ERROR_CODES.AUTH_UNAUTHORIZED);
+  }
+
+  // Resolve Clerk ID → Supabase UUID (uploaded_images.user_id + storage path are UUID-based)
+  const dbUser = await getUserByClerkId(clerkUserId);
+  if (!dbUser) {
+    throw new AppError(ERROR_CODES.AUTH_UNAUTHORIZED, "User not found");
   }
 
   const formData = await request.formData();
@@ -34,7 +41,7 @@ export const POST = withErrorHandler(async (request: NextRequest) => {
     file: buffer,
     originalFilename: file.name,
     mimeType: file.type,
-    userId: clerkUserId,
+    userId: dbUser.id,
     videoId: typeof videoId === "string" ? videoId : undefined,
   });
 

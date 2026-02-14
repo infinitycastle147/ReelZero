@@ -4,6 +4,7 @@ import type { NextRequest } from "next/server";
 
 import type { ScriptTheme } from "@/lib/ai/types";
 import { PROMPT_MAX_LENGTH, PROMPT_MIN_LENGTH } from "@/lib/constants/ai";
+import { getUserByClerkId } from "@/lib/db/queries/users";
 import { createVideo } from "@/lib/db/queries/videos";
 import { AppError } from "@/lib/errors/app-error";
 import { ERROR_CODES } from "@/lib/errors/codes";
@@ -32,10 +33,16 @@ type CreateVideoRequest = {
 };
 
 export const POST = withErrorHandler(async (request: NextRequest) => {
-  const { userId } = await auth();
+  const { userId: clerkUserId } = await auth();
 
-  if (!userId) {
+  if (!clerkUserId) {
     throw new AppError(ERROR_CODES.AUTH_UNAUTHORIZED);
+  }
+
+  // Resolve Clerk ID → Supabase UUID (videos.user_id is a UUID FK)
+  const dbUser = await getUserByClerkId(clerkUserId);
+  if (!dbUser) {
+    throw new AppError(ERROR_CODES.AUTH_UNAUTHORIZED, "User not found");
   }
 
   const body = (await request.json()) as CreateVideoRequest;
@@ -73,7 +80,7 @@ export const POST = withErrorHandler(async (request: NextRequest) => {
   }
 
   const video = await createVideo({
-    user_id: userId,
+    user_id: dbUser.id,
     title: body.prompt.substring(0, 100),
     prompt: body.prompt,
     metadata: {

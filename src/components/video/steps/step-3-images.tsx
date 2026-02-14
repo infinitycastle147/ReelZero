@@ -1,6 +1,6 @@
 "use client";
 
-import { Loader2, AlertCircle } from "lucide-react";
+import { Loader2 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { ImageSelector } from "@/components/video/image-selector";
@@ -9,7 +9,7 @@ import { useVideoStore } from "@/store/video-store";
 
 export function Step3Images() {
   const { scenes, setStep } = useVideoStore();
-  const { generateAllImages, error } = useVideoGeneration();
+  const { generateAllImages, generateSceneImage, error } = useVideoGeneration();
 
   const allHaveImages = scenes.every((s) => s.imageUrl !== null);
   const anyLoading = scenes.some((s) => s.imageStatus === "loading");
@@ -23,7 +23,7 @@ export function Step3Images() {
 
   return (
     <div className="space-y-6">
-      {/* Generate all AI images button */}
+      {/* Generate all AI images button — always visible so user can opt in to AI generation */}
       <Button
         onClick={generateAllImages}
         disabled={anyLoading}
@@ -35,12 +35,21 @@ export function Step3Images() {
             <Loader2 className="mr-2 h-4 w-4 animate-spin" />
             Generating images…
           </>
+        ) : anyError ? (
+          "Retry Failed AI Images"
         ) : (
-          "Generate All Images (AI)"
+          "Generate All Images with AI"
         )}
       </Button>
 
-      {/* Per-scene ImageSelector cards */}
+      {/* Hook-level error (e.g. missing context) */}
+      {error && (
+        <p className="text-sm text-destructive" role="alert">
+          {error}
+        </p>
+      )}
+
+      {/* Per-scene cards */}
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
         {scenes.map((scene, index) => (
           <div
@@ -55,45 +64,27 @@ export function Step3Images() {
               </p>
             </div>
 
-            {/* AI/Upload selector */}
+            {/* Per-scene loading overlay — replaces selector while generating */}
             <div className="p-3">
-              {/* Per-scene loading overlay */}
               {scene.imageStatus === "loading" ? (
                 <div className="flex aspect-[9/16] w-full flex-col items-center justify-center gap-2 rounded-lg bg-muted">
                   <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
                   <p className="text-xs text-muted-foreground">Generating…</p>
                 </div>
-              ) : scene.imageStatus === "error" && scene.imageSource === "ai" ? (
-                // Only show the error+retry block for AI generation failures.
-                // Upload errors are shown inline by <ImageDropzone>.
-                <div className="flex aspect-[9/16] w-full flex-col items-center justify-center gap-2 rounded-lg bg-muted p-4">
-                  <AlertCircle className="h-6 w-6 text-destructive" />
-                  <p className="text-xs text-destructive text-center">
-                    AI generation failed
-                  </p>
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    onClick={() => generateAllImages()}
-                    aria-label={`Retry AI image generation for scene ${index + 1}`}
-                  >
-                    Retry All
-                  </Button>
-                </div>
               ) : (
-                <ImageSelector sceneId={scene.id} sceneIndex={index} />
+                // ImageSelector always renders — shows AI image, error state with
+                // upload fallback hint, or upload dropzone. User can always switch
+                // to the Upload tab regardless of AI generation status.
+                <ImageSelector
+                  sceneId={scene.id}
+                  sceneIndex={index}
+                  onRetryAi={() => generateSceneImage(scene.id)}
+                />
               )}
             </div>
           </div>
         ))}
       </div>
-
-      {/* Hook-level error (e.g. network failure across all scenes) */}
-      {error && !anyError && (
-        <p className="text-sm text-destructive" role="alert">
-          {error}
-        </p>
-      )}
 
       {/* Navigation */}
       <div className="flex justify-between">

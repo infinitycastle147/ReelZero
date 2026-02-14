@@ -65,7 +65,7 @@ export async function generateText(input: TextGenerationInput): Promise<TextGene
     ],
     generationConfig: {
       temperature: input.options?.temperature ?? 0.7,
-      maxOutputTokens: input.options?.maxTokens ?? 2048,
+      maxOutputTokens: input.options?.maxTokens ?? 8192,
     },
   };
 
@@ -109,13 +109,17 @@ export async function generateText(input: TextGenerationInput): Promise<TextGene
     return response.json() as Promise<GeminiGenerateContentResponse>;
   });
 
-  // Check for safety/content-policy in successful responses
+  // Check finish reason in successful responses
   const finishReason = result.candidates?.[0]?.finishReason;
   if (finishReason && SAFETY_FINISH_REASONS.includes(finishReason)) {
     throw new AppError(
       ERROR_CODES.GENERATION_SCRIPT_FAILED,
       "Your prompt was flagged by content safety filters. Please try rephrasing your request.",
     );
+  }
+
+  if (finishReason === "MAX_TOKENS") {
+    throw new RetryableError("Gemini response truncated (MAX_TOKENS) — retrying", 429);
   }
 
   const text = result.candidates?.[0]?.content?.parts?.[0]?.text;

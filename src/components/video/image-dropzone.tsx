@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import { UploadCloud } from "lucide-react";
 import { useRef, useState } from "react";
 
@@ -38,10 +39,14 @@ function validateFile(file: File): string | null {
 }
 
 export function ImageDropzone({ sceneId, hasImage }: ImageDropzoneProps) {
-  const { updateScene, setSceneImageStatus, videoId } = useVideoStore();
+  const { updateScene, setSceneImageStatus, videoId, scenes } = useVideoStore();
+  const scene = scenes.find((s) => s.id === sceneId);
+  const uploadedImageUrl = hasImage && scene?.imageSource === "upload" ? (scene.imageUrl ?? null) : null;
+
   const [isDragging, setIsDragging] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isUploading, setIsUploading] = useState(false);
+  const [fileName, setFileName] = useState<string | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
   const handleFile = async (file: File) => {
@@ -51,6 +56,7 @@ export function ImageDropzone({ sceneId, hasImage }: ImageDropzoneProps) {
       setError(validationError);
       return;
     }
+    setFileName(file.name);
 
     setIsUploading(true);
     setSceneImageStatus(sceneId, "loading");
@@ -118,53 +124,70 @@ export function ImageDropzone({ sceneId, hasImage }: ImageDropzoneProps) {
         aria-label="Upload image file"
       />
 
-      {/* Drop target */}
-      <div
-        role="button"
-        tabIndex={0}
-        onClick={() => inputRef.current?.click()}
-        onKeyDown={(e) => {
-          if (e.key === "Enter" || e.key === " ") inputRef.current?.click();
-        }}
-        onDragOver={(e) => {
-          e.preventDefault();
-          setIsDragging(true);
-        }}
-        onDragLeave={() => setIsDragging(false)}
-        onDrop={handleDrop}
-        aria-label="Drop image here or click to browse"
-        className={[
-          "flex flex-col items-center justify-center gap-2 rounded-lg border-2 border-dashed p-6 text-center cursor-pointer transition-colors duration-150",
-          isDragging
-            ? "border-primary bg-primary/5"
-            : "border-border hover:border-primary/50 hover:bg-muted/40",
-          isUploading ? "pointer-events-none opacity-60" : "",
-        ].join(" ")}
-      >
-        <UploadCloud className="h-8 w-8 text-muted-foreground" aria-hidden="true" />
-        <div>
-          <p className="text-sm font-medium">
-            {isUploading ? "Uploading…" : "Drop image here"}
-          </p>
-          <p className="mt-0.5 text-xs text-muted-foreground">
-            JPEG, PNG, WebP — max 10 MB
-          </p>
+      {/* Preview — shown when an uploaded image exists */}
+      {uploadedImageUrl ? (
+        <div className="space-y-2">
+          <div className="relative aspect-[9/16] w-full overflow-hidden rounded-lg bg-muted">
+            <Image
+              src={uploadedImageUrl}
+              alt="Uploaded scene image"
+              fill
+              className="object-cover"
+            />
+          </div>
+          {fileName && (
+            <p className="truncate text-xs text-muted-foreground" title={fileName}>
+              {fileName}
+            </p>
+          )}
+          {!isUploading && (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => inputRef.current?.click()}
+              className="w-full"
+            >
+              Replace Image
+            </Button>
+          )}
         </div>
-      </div>
-
-      {/* Replace button (shown when image already set) */}
-      {hasImage && !isUploading && (
-        <Button
-          variant="outline"
-          size="sm"
+      ) : (
+        /* Drop target — shown when no image yet or still uploading */
+        <div
+          role="button"
+          tabIndex={0}
           onClick={() => inputRef.current?.click()}
-          className="w-full"
+          onKeyDown={(e) => {
+            if (e.key === "Enter" || e.key === " ") inputRef.current?.click();
+          }}
+          onDragOver={(e) => {
+            e.preventDefault();
+            setIsDragging(true);
+          }}
+          onDragLeave={() => setIsDragging(false)}
+          onDrop={handleDrop}
+          aria-label="Drop image here or click to browse"
+          className={[
+            "flex flex-col items-center justify-center gap-2 rounded-lg border-2 border-dashed p-6 text-center cursor-pointer transition-colors duration-150",
+            isDragging
+              ? "border-primary bg-primary/5"
+              : "border-border hover:border-primary/50 hover:bg-muted/40",
+            isUploading ? "pointer-events-none opacity-60" : "",
+          ].join(" ")}
         >
-          Replace Image
-        </Button>
+          <UploadCloud className="h-8 w-8 text-muted-foreground" aria-hidden="true" />
+          <div>
+            <p className="text-sm font-medium">
+              {isUploading ? "Uploading…" : "Drop image here"}
+            </p>
+            <p className="mt-0.5 text-xs text-muted-foreground">
+              JPEG, PNG, WebP — max 10 MB
+            </p>
+          </div>
+        </div>
       )}
 
-      {/* Inline validation error */}
+      {/* Inline validation / upload error */}
       {error && (
         <p className="text-xs text-destructive" role="alert">
           {error}
