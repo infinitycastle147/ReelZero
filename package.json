@@ -8,7 +8,8 @@
     "start": "next start",
     "lint": "eslint",
     "type-check": "tsc --noEmit",
-    "pre-commit": "npm run lint && npm run type-check && npm run build"
+    "pre-commit": "npm run lint && npm run type-check && npm run build",
+    "renderer:sync-files": "bash renderer/scripts/sync-files.sh"
   },
   "dependencies": {
     "@clerk/nextjs": "^6.37.3",
