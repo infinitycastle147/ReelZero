@@ -114,10 +114,9 @@ ReelZero uses a **microservice architecture** with two separate deployments:
 │   │   │   ├── videos/
 │   │   │   │   ├── page.tsx          # Video library
 │   │   │   │   └── [id]/page.tsx     # Single video view
-│   │   │   ├── settings/
-│   │   │   │   └── page.tsx          # User settings
 │   │   │   └── billing/
-│   │   │       └── page.tsx          # Subscription management
+│   │   │       ├── page.tsx          # Subscription management
+│   │   │       └── success/page.tsx  # Post-checkout confirmation
 │   │   ├── api/
 │   │   │   ├── auth/
 │   │   │   │   └── webhook/route.ts  # Clerk webhook handler
@@ -125,130 +124,165 @@ ReelZero uses a **microservice architecture** with two separate deployments:
 │   │   │   │   ├── generate/route.ts # Script generation
 │   │   │   │   ├── images/route.ts   # Image generation
 │   │   │   │   ├── audio/route.ts    # TTS generation
-│   │   │   │   ├── render/route.ts   # Video rendering
-│   │   │   │   └── [id]/route.ts     # CRUD operations
+│   │   │   │   ├── render/route.ts   # Trigger render + status polling
+│   │   │   │   ├── render/status/route.ts   # Poll render progress
+│   │   │   │   ├── render/stage/route.ts    # Update render stage
+│   │   │   │   └── render/complete/route.ts # Renderer callback
+│   │   │   ├── videos/
+│   │   │   │   ├── route.ts          # List user videos (paginated)
+│   │   │   │   └── [id]/route.ts     # Get / delete single video
 │   │   │   ├── upload/
-│   │   │   │   └── route.ts          # Image upload handling
+│   │   │   │   └── images/route.ts   # Image upload handling
 │   │   │   ├── subscription/
-│   │   │   │   ├── route.ts          # Subscription management
-│   │   │   │   └── webhook/route.ts  # Stripe webhook
+│   │   │   │   ├── route.ts          # Get current subscription
+│   │   │   │   ├── checkout/route.ts # Create Stripe Checkout session
+│   │   │   │   ├── checkout/verify/route.ts # Post-checkout verification
+│   │   │   │   ├── portal/route.ts   # Create Stripe Portal session
+│   │   │   │   └── webhook/route.ts  # Stripe webhook handler
 │   │   │   └── user/
-│   │   │       └── credits/route.ts  # Credit operations
+│   │   │       ├── credits/route.ts  # Get credit balance
+│   │   │       └── usage/route.ts    # Get usage statistics
 │   │   ├── layout.tsx
 │   │   ├── page.tsx                  # Landing page
 │   │   └── globals.css
 │   │
 │   ├── components/
 │   │   ├── ui/                       # shadcn/ui components (auto-generated)
-│   │   │   ├── button.tsx            # npx shadcn add button
-│   │   │   ├── card.tsx              # npx shadcn add card
-│   │   │   ├── dialog.tsx            # npx shadcn add dialog
-│   │   │   ├── dropdown-menu.tsx     # npx shadcn add dropdown-menu
-│   │   │   ├── input.tsx             # npx shadcn add input
-│   │   │   ├── label.tsx             # npx shadcn add label
-│   │   │   ├── progress.tsx          # npx shadcn add progress
-│   │   │   ├── select.tsx            # npx shadcn add select
-│   │   │   ├── skeleton.tsx          # npx shadcn add skeleton
-│   │   │   ├── slider.tsx            # npx shadcn add slider
-│   │   │   ├── switch.tsx            # npx shadcn add switch
-│   │   │   ├── tabs.tsx              # npx shadcn add tabs
-│   │   │   ├── textarea.tsx          # npx shadcn add textarea
-│   │   │   ├── toast.tsx             # npx shadcn add toast
-│   │   │   ├── toaster.tsx           # npx shadcn add toast
-│   │   │   └── tooltip.tsx           # npx shadcn add tooltip
+│   │   │   ├── accordion.tsx
+│   │   │   ├── badge.tsx
+│   │   │   ├── button.tsx
+│   │   │   ├── card.tsx
+│   │   │   ├── input.tsx
+│   │   │   ├── label.tsx
+│   │   │   ├── progress.tsx
+│   │   │   ├── select.tsx
+│   │   │   ├── separator.tsx
+│   │   │   ├── skeleton.tsx
+│   │   │   ├── sonner.tsx
+│   │   │   ├── tabs.tsx
+│   │   │   ├── textarea.tsx
+│   │   │   └── tooltip.tsx
 │   │   ├── layout/
-│   │   │   ├── header.tsx
-│   │   │   ├── sidebar.tsx
-│   │   │   ├── footer.tsx
-│   │   │   └── dashboard-layout.tsx
-│   │   ├── video/
-│   │   │   ├── video-wizard.tsx      # Multi-step creation form
-│   │   │   ├── script-editor.tsx     # Scene editing UI
+│   │   │   ├── dashboard-header.tsx
+│   │   │   ├── dashboard-sidebar.tsx
+│   │   │   └── sidebar-nav-item.tsx
+│   │   ├── landing/                  # Landing page sections
+│   │   │   ├── landing-header.tsx
+│   │   │   ├── landing-hero.tsx
+│   │   │   ├── landing-features.tsx
+│   │   │   ├── landing-how-it-works.tsx
+│   │   │   ├── landing-pricing-table.tsx
+│   │   │   ├── landing-faq.tsx
+│   │   │   └── landing-footer.tsx
+│   │   ├── video/                    # Video + dashboard components (consolidated)
+│   │   │   ├── video-wizard.tsx      # Multi-step creation orchestrator
+│   │   │   ├── wizard-step-indicator.tsx
+│   │   │   ├── steps/
+│   │   │   │   ├── step-1-input.tsx
+│   │   │   │   ├── step-2-script.tsx
+│   │   │   │   ├── step-3-images.tsx
+│   │   │   │   ├── step-4-settings.tsx
+│   │   │   │   ├── step-5-progress.tsx
+│   │   │   │   └── step-6-player.tsx
 │   │   │   ├── scene-card.tsx        # Individual scene component
+│   │   │   ├── scene-list-sortable.tsx
 │   │   │   ├── image-selector.tsx    # AI/upload image choice
-│   │   │   ├── image-uploader.tsx    # Drag-drop upload
-│   │   │   ├── voice-selector.tsx    # Voice options
-│   │   │   ├── caption-style.tsx     # Caption style picker
-│   │   │   ├── transition-picker.tsx # Transition selection
+│   │   │   ├── image-dropzone.tsx    # Drag-drop upload
 │   │   │   ├── generation-progress.tsx
-│   │   │   └── video-player.tsx      # Remotion Player wrapper
-│   │   ├── dashboard/
+│   │   │   ├── video-player.tsx      # Remotion Player wrapper
+│   │   │   ├── video-card.tsx        # Library card (thumbnail, actions)
 │   │   │   ├── video-grid.tsx
-│   │   │   ├── video-card.tsx
-│   │   │   ├── stats-card.tsx
-│   │   │   └── usage-chart.tsx
+│   │   │   ├── video-list.tsx
+│   │   │   ├── video-library-client.tsx
+│   │   │   ├── video-library-toolbar.tsx
+│   │   │   ├── video-library-skeleton.tsx
+│   │   │   ├── video-detail-actions.tsx
+│   │   │   ├── video-detail-metadata.tsx
+│   │   │   ├── video-detail-poller.tsx
+│   │   │   ├── delete-video-dialog.tsx
+│   │   │   ├── usage-chart.tsx
+│   │   │   └── empty-state.tsx
 │   │   └── billing/
 │   │       ├── pricing-table.tsx
 │   │       ├── subscription-card.tsx
-│   │       └── credit-display.tsx
+│   │       ├── credit-display.tsx
+│   │       └── payment-failed-banner.tsx
 │   │
 │   ├── lib/
 │   │   ├── db/
 │   │   │   ├── client.ts             # Supabase client
 │   │   │   ├── schema.ts             # TypeScript types from schema
+│   │   │   ├── storage.ts            # uploadFile / getFileUrl (4 buckets)
 │   │   │   └── queries/
 │   │   │       ├── users.ts
 │   │   │       ├── videos.ts
 │   │   │       ├── subscriptions.ts
-│   │   │       └── usage.ts
+│   │   │       ├── usage.ts
+│   │   │       ├── generation-logs.ts
+│   │   │       ├── uploaded-images.ts
+│   │   │       ├── rate-limits.ts
+│   │   │       └── stripe-webhook-events.ts
 │   │   ├── ai/                       # AI Provider Abstraction
-│   │   │   ├── text-generation.ts    # Text generation (provider-agnostic)
-│   │   │   ├── image-generation.ts   # Image generation (provider-agnostic)
-│   │   │   ├── tts.ts                # Text-to-speech (provider-agnostic)
+│   │   │   ├── text-generation.ts    # Gemini Flash script generation
+│   │   │   ├── image-generation.ts   # Gemini image generation
+│   │   │   ├── scene-image-generation.ts
+│   │   │   ├── image-processing.ts   # Sharp resize / letterbox
+│   │   │   ├── image-upload.ts       # Validate + upload to Storage
+│   │   │   ├── tts.ts                # ElevenLabs TTS
+│   │   │   ├── voice-map.ts          # Voice ID lookup
+│   │   │   ├── retry.ts              # Exponential backoff
 │   │   │   ├── types.ts              # AI input/output interfaces
 │   │   │   └── config.ts             # Provider configs (endpoints, keys)
 │   │   ├── prompts/                  # Centralized Prompts
-│   │   │   ├── script-generation.ts  # Script generation prompts
-│   │   │   ├── image-generation.ts   # Image generation prompts
-│   │   │   └── types.ts              # Prompt input types
+│   │   │   ├── script-generation.ts
+│   │   │   ├── image-generation.ts
+│   │   │   └── types.ts
 │   │   ├── errors/                   # Error Handling System
 │   │   │   ├── codes.ts              # ERROR_CODES enum
 │   │   │   ├── messages.ts           # Error code → message mapping
-│   │   │   ├── AppError.ts           # Base error class
-│   │   │   └── middleware.ts         # Error handling middleware
+│   │   │   ├── app-error.ts          # Base error class
+│   │   │   └── middleware.ts         # withErrorHandler wrapper
 │   │   ├── services/
-│   │   │   ├── remotion/
-│   │   │   │   ├── render.ts         # Render orchestration
-│   │   │   │   └── sync.ts           # Audio-scene synchronization
-│   │   │   └── storage/
-│   │   │       ├── upload.ts         # File upload handling
-│   │   │       └── cdn.ts            # CDN URL generation
+│   │   │   └── remotion/
+│   │   │       ├── render.ts         # Render orchestration + polling
+│   │   │       └── sync.ts           # Audio-scene synchronization
+│   │   ├── api/
+│   │   │   └── client.ts             # Typed fetch wrapper (auth, errors)
 │   │   ├── auth/
-│   │   │   ├── clerk.ts              # Clerk configuration
 │   │   │   └── middleware.ts         # Auth middleware helpers
 │   │   ├── stripe/
 │   │   │   ├── client.ts             # Stripe client
 │   │   │   ├── products.ts           # Product/price definitions
-│   │   │   └── webhooks.ts           # Webhook handlers
+│   │   │   └── webhooks.ts           # Webhook event handlers
 │   │   ├── utils/
-│   │   │   ├── image.ts              # Image processing utils
-│   │   │   ├── time.ts               # Duration calculations
-│   │   │   └── validation.ts         # Input validation
+│   │   │   └── env.ts                # Environment variable validation
 │   │   └── constants/
+│   │       ├── ai.ts                 # AI model names / limits
 │   │       ├── video.ts              # Video specs constants
 │   │       ├── pricing.ts            # Pricing tiers
 │   │       └── voices.ts             # Voice options
 │   │
 │   ├── store/
-│   │   ├── video-store.ts            # Video creation state
+│   │   ├── video-store.ts            # Video creation + wizard state
 │   │   ├── user-store.ts             # User/subscription state
-│   │   └── ui-store.ts               # UI state (modals, etc.)
+│   │   └── ui-store.ts               # UI state (modals, toasts)
 │   │
 │   ├── hooks/
-│   │   ├── use-video-generation.ts   # Video gen orchestration
-│   │   ├── use-subscription.ts       # Subscription state
-│   │   ├── use-credits.ts            # Credit management
-│   │   └── use-upload.ts             # File upload logic
+│   │   ├── useVideoGeneration.ts     # Video gen orchestration
+│   │   ├── useCredits.ts             # Credit management
+│   │   └── use-render-polling.ts     # Poll render status
 │   │
 │   ├── types/
-│   │   ├── video.ts                  # Video-related types
-│   │   ├── scene.ts                  # Scene types
-│   │   ├── api.ts                    # API request/response types
-│   │   └── database.ts               # Database types
+│   │   ├── video.ts
+│   │   ├── scene.ts
+│   │   ├── api.ts
+│   │   ├── database.ts
+│   │   ├── remotion.ts
+│   │   └── render.ts
 │   │
 │   └── remotion/
 │       ├── Root.tsx                  # Remotion root component
-│       ├── Video.tsx                 # Main video composition
+│       ├── VideoComposition.tsx      # Main video composition
 │       ├── Scene.tsx                 # Scene component
 │       ├── transitions/
 │       │   ├── Fade.tsx
@@ -263,13 +297,6 @@ ReelZero uses a **microservice architecture** with two separate deployments:
 ├── public/
 │   ├── fonts/
 │   └── images/
-│
-├── prisma/                           # Alternative to raw SQL
-│   └── schema.prisma                 # (Optional: if using Prisma)
-│
-├── scripts/
-│   ├── setup-db.ts                   # Database setup
-│   └── seed.ts                       # Seed data
 │
 ├── tests/
 │   ├── unit/
@@ -459,99 +486,63 @@ TOTAL TIME: 70-90 seconds
 ```
 App
 ├── ClerkProvider
-│   └── QueryClientProvider
-│       ├── LandingPage
-│           │   ├── Hero
-│           │   ├── Features
-│           │   ├── Pricing
-│           │   └── CTA
+│   ├── LandingPage (/)
+│   │   ├── LandingHeader
+│   │   ├── LandingHero
+│   │   ├── LandingFeatures
+│   │   ├── LandingHowItWorks
+│   │   ├── LandingPricingTable
+│   │   ├── LandingFaq
+│   │   └── LandingFooter
+│   │
+│   └── DashboardLayout (protected)
+│       ├── DashboardHeader
+│       │   ├── Logo
+│       │   ├── CreditDisplay
+│       │   └── UserButton (Clerk)
+│       │
+│       ├── DashboardSidebar
+│       │   └── SidebarNavItem × 4 (Dashboard, Create, Videos, Billing)
+│       │
+│       └── MainContent
 │           │
-│       └── DashboardLayout
-│               ├── Header
-│               │   ├── Logo
-│               │   ├── Navigation
-│               │   ├── CreditDisplay
-│               │   └── UserMenu
-│               │
-│               ├── Sidebar
-│               │   ├── NavLinks
-│               │   └── UsageStats
-│               │
-│               └── MainContent
-│                   │
-│                   ├── Dashboard (/)
-│                   │   ├── WelcomeCard
-│                   │   ├── QuickActions
-│                   │   ├── RecentVideos
-│                   │   └── UsageChart
-│                   │
-│                   ├── CreateVideo (/create)
-│                   │   └── VideoWizard
-│                   │       ├── Step1_InputForm
-│                   │       │   ├── PromptInput
-│                   │       │   ├── VoiceSelector
-│                   │       │   ├── ThemeSelector
-│                   │       │   └── CaptionStylePicker
-│                   │       │
-│                   │       ├── Step2_ScriptEditor
-│                   │       │   ├── SceneList
-│                   │       │   │   └── SceneCard (×5)
-│                   │       │   │       ├── NarrationEditor
-│                   │       │   │       ├── DescriptionEditor
-│                   │       │   │       └── SceneActions
-│                   │       │   └── AddSceneButton
-│                   │       │
-│                   │       ├── Step3_ImageSelection
-│                   │       │   ├── ImageGrid
-│                   │       │   │   └── ImageSelector (×5)
-│                   │       │   │       ├── AIGenerateButton
-│                   │       │   │       ├── UploadButton
-│                   │       │   │       └── ImagePreview
-│                   │       │   └── GenerateAllButton
-│                   │       │
-│                   │       ├── Step4_Settings
-│                   │       │   ├── TransitionPicker
-│                   │       │   ├── CaptionConfirm
-│                   │       │   └── SettingsSummary
-│                   │       │
-│                   │       ├── Step5_Generation
-│                   │       │   └── GenerationProgress
-│                   │       │       ├── StageIndicator
-│                   │       │       ├── ProgressBar
-│                   │       │       └── TimeRemaining
-│                   │       │
-│                   │       └── Step6_Preview
-│                   │           ├── VideoPlayer (Remotion)
-│                   │           ├── DownloadButton
-│                   │           └── RegenerateButton
-│                   │
-│                   ├── VideoLibrary (/videos)
-│                   │   ├── SearchBar
-│                   │   ├── FilterControls
-│                   │   ├── ViewToggle (Grid/List)
-│                   │   └── VideoGrid
-│                   │       └── VideoCard (×n)
-│                   │           ├── Thumbnail
-│                   │           ├── Title
-│                   │           ├── Duration
-│                   │           ├── Date
-│                   │           └── Actions
-│                   │
-│                   ├── VideoDetail (/videos/[id])
-│                   │   ├── VideoPlayer
-│                   │   ├── VideoInfo
-│                   │   └── VideoActions
-│                   │
-│                   ├── Settings (/settings)
-│                   │   ├── ProfileSection
-│                   │   ├── PreferencesSection
-│                   │   └── DangerZone
-│                   │
-│                   └── Billing (/billing)
-│                       ├── CurrentPlan
-│                       ├── UsageBreakdown
-│                       ├── PricingTable
-│                       └── BillingHistory
+│           ├── Dashboard (/dashboard)
+│           │   ├── WelcomeCard
+│           │   ├── QuickActions
+│           │   ├── RecentVideos → VideoCard (×n)
+│           │   └── UsageChart
+│           │
+│           ├── CreateVideo (/create)
+│           │   └── VideoWizard
+│           │       ├── WizardStepIndicator
+│           │       ├── Step1_Input (prompt, voice, theme, captions)
+│           │       ├── Step2_Script
+│           │       │   └── SceneListSortable → SceneCard (×5)
+│           │       ├── Step3_Images
+│           │       │   └── ImageSelector → ImageDropzone
+│           │       ├── Step4_Settings (transition, caption confirm)
+│           │       ├── Step5_Progress → GenerationProgress
+│           │       └── Step6_Player → VideoPlayer (Remotion)
+│           │
+│           ├── VideoLibrary (/videos)
+│           │   ├── VideoLibraryToolbar (search, filter, view toggle)
+│           │   ├── VideoGrid → VideoCard (×n)
+│           │   ├── VideoList → VideoCard (×n)
+│           │   └── VideoLibrarySkeleton
+│           │
+│           ├── VideoDetail (/videos/[id])
+│           │   ├── VideoPlayer
+│           │   ├── VideoDetailMetadata
+│           │   ├── VideoDetailActions (download, delete)
+│           │   ├── VideoDetailPoller (polls until render complete)
+│           │   └── DeleteVideoDialog
+│           │
+│           └── Billing (/billing)
+│               ├── SubscriptionCard
+│               ├── PricingTable
+│               ├── CreditDisplay
+│               ├── PaymentFailedBanner
+│               └── BillingSuccess (/billing/success)
 ```
 
 ### 4.2 Service Layer Architecture
