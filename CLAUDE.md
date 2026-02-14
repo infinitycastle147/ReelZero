@@ -13,6 +13,12 @@ Auto-generated from all feature plans. Last updated: 2026-02-11
 - Supabase PostgreSQL (`subscriptions` table + new `stripe_webhook_events` table) (006-credit-billing)
 - TypeScript 5+ strict mode + Next.js 16+ (App Router), React 18+, Zustand (existing), shadcn/ui (new-york / neutral), Tailwind CSS v4, `@dnd-kit/core` + `@dnd-kit/sortable` (new — scene reordering), native HTML5 file upload (no new library), `zustand/middleware` persist (new — draft persistence) (007-video-wizard)
 - Supabase Storage (images bucket for scene images — already provisioned by F003) (007-video-wizard)
+- TypeScript 5+ (strict mode), Node.js ≥20 + Next.js 16.1.6 (App Router), React 19, `remotion` (new), `@remotion/player` (new), `@remotion/media` (new), `@clerk/nextjs` ^6 (existing), `@supabase/supabase-js` ^2 (existing), `zustand` ^5 (existing) (008-remotion-pipeline)
+- Supabase PostgreSQL (`videos` table + new `current_stage` column via migration) + Supabase Storage (`videos` bucket for MP4, `audio` bucket for MP3) (008-remotion-pipeline)
+- TypeScript 5+ (strict mode), Node.js ≥20 + Next.js 16.1.6 (App Router), React 19, Supabase JS v2, Clerk v6, Zustand v5, shadcn/ui (new-york), Tailwind CSS v4, Remotion Player (installed from F008), Recharts (via shadcn/ui chart — verify in package.json) (009-video-dashboard)
+- Supabase PostgreSQL (videos, subscriptions, usage_tracking, uploaded_images) + Supabase Storage (videos, audio, images, thumbnails buckets) (009-video-dashboard)
+- TypeScript 5+ (strict mode) + Next.js 16+ (App Router), React 19, shadcn/ui (new-york/neutral), Tailwind CSS v4, `@clerk/nextjs` ^6 (existing), `lucide-react` (existing), `next/image` (built-in) (010-landing-page)
+- N/A — no database access; assets served from `public/` (010-landing-page)
 
 - TypeScript 5+ (strict mode), Next.js 16+ (App Router) + `@clerk/nextjs` (auth SDK), `svix` (webhook verification), `lucide-react` (icons), `shadcn/ui` (UI components) (001-clerk-auth)
 
@@ -32,9 +38,9 @@ npm test && npm run lint
 TypeScript 5+ (strict mode), Next.js 16+ (App Router): Follow standard conventions
 
 ## Recent Changes
-- 007-video-wizard: Added TypeScript 5+ strict mode + Next.js 16+ (App Router), React 18+, Zustand (existing), shadcn/ui (new-york / neutral), Tailwind CSS v4, `@dnd-kit/core` + `@dnd-kit/sortable` (new — scene reordering), `react-dropzone` (new — image upload), `zustand/middleware` persist (new — draft persistence)
-- 006-credit-billing: Added TypeScript 5+ (strict mode), Next.js 16+ (App Router) + `stripe` ^14.0.0 (new), `@clerk/nextjs` (existing), `@supabase/supabase-js` (existing), `svix` (existing for Clerk webhook; Stripe uses its own `stripe.webhooks.constructEvent`)
-- 004-ai-services: Added TypeScript 5+ (strict mode), Next.js 16+ (App Router) + `sharp` (v0.34.5, already installed), `@supabase/supabase-js` (existing), `@clerk/nextjs` (existing)
+- 010-landing-page: Added TypeScript 5+ (strict mode) + Next.js 16+ (App Router), React 19, shadcn/ui (new-york/neutral), Tailwind CSS v4, `@clerk/nextjs` ^6 (existing), `lucide-react` (existing), `next/image` (built-in)
+- 009-video-dashboard: Added TypeScript 5+ (strict mode), Node.js ≥20 + Next.js 16.1.6 (App Router), React 19, Supabase JS v2, Clerk v6, Zustand v5, shadcn/ui (new-york), Tailwind CSS v4, Remotion Player (installed from F008), Recharts (via shadcn/ui chart — verify in package.json)
+- 008-remotion-pipeline: Added TypeScript 5+ (strict mode), Node.js ≥20 + Next.js 16.1.6 (App Router), React 19, `remotion` (new), `@remotion/player` (new), `@remotion/media` (new), `@clerk/nextjs` ^6 (existing), `@supabase/supabase-js` ^2 (existing), `zustand` ^5 (existing)
 
 
 <!-- MANUAL ADDITIONS START -->
