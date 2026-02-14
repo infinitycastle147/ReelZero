@@ -25,13 +25,18 @@ WORKDIR /app
 # Copy package manifests first for layer caching
 COPY renderer/package*.json ./
 
-# Install production dependencies only
-RUN npm ci --only=production
+# Install ALL dependencies (including devDeps) for the TypeScript build
+RUN npm ci
 
-# Copy pre-built dist/ output
-# Note: Run `npm run build` inside renderer/ before building the Docker image,
-# or build as part of CI pipeline
-COPY renderer/dist ./dist
+# Copy renderer source
+COPY renderer/src ./src
+COPY renderer/tsconfig.json ./tsconfig.json
+
+# Build TypeScript → dist/
+RUN npm run build
+
+# Remove devDependencies after build to keep image lean
+RUN npm prune --production
 
 EXPOSE 3001
 
