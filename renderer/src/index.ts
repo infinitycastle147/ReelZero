@@ -1,3 +1,6 @@
+// Load .env in development (no-op in production where env vars are injected)
+import "dotenv/config";
+
 import express from "express";
 
 import { healthRouter } from "@/routes/health";
