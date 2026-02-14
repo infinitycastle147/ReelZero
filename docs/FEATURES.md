@@ -15,8 +15,9 @@ F001 Foundation
  │         └── F004 Database & User Sync
  │              ├── F005 AI Services (Script + Image + TTS)
  │              │    └── F007 Video Generation Wizard (UI)
- │              │         └── F008 Remotion Rendering Pipeline
- │              │              └── F009 Video Dashboard & Library
+ │              │         └── F008 Remotion Rendering Pipeline (main app side)
+ │              │              ├── F009 Video Dashboard & Library
+ │              │              └── F011 Renderer Microservice (renderer/ folder)
  │              └── F006 Credit & Billing
  │                   └── F007 (credit checks in wizard)
  └── F010 Landing Page
@@ -456,6 +457,113 @@ Low-Medium - static page with reusable components
 
 ---
 
+## F011 - Renderer Microservice
+
+**Branch:** `011-renderer-microservice`
+**PRD Ref:** [ARCHITECTURE.md Section 1.1, 14](ARCHITECTURE.md)
+**Depends on:** F008 (shares Remotion compositions)
+**Monorepo path:** `renderer/` (deployed independently to Render.com)
+
+### Context
+
+F008 implemented the main app side of rendering (dispatch, polling, callback routes,
+Remotion compositions). F011 is the **other half** — the Express microservice that
+actually performs the render. It lives in `renderer/` inside this monorepo but is
+deployed as a completely separate service on Render.com. Vercel never sees it.
+
+### Scope
+
+#### Directory Structure (`renderer/`)
+
+```
+renderer/
+├── src/
+│   ├── index.ts                  # Express app entry point
+│   ├── routes/
+│   │   ├── render.ts             # POST /render — accept job, process async
+│   │   ├── health.ts             # GET /health — liveness check
+│   │   └── status.ts             # GET /status/:jobId — poll job progress
+│   ├── services/
+│   │   ├── remotion.ts           # @remotion/renderer + @remotion/bundler
+│   │   ├── assets.ts             # Download images + audio from Supabase URLs
+│   │   └── storage.ts            # Upload final MP4 to Supabase Storage
+│   └── remotion/                 # Compositions (copied from src/remotion/)
+│       ├── Root.tsx
+│       ├── VideoComposition.tsx
+│       ├── Scene.tsx
+│       ├── captions/
+│       │   ├── WordByWord.tsx
+│       │   └── FullSentence.tsx
+│       ├── transitions/
+│       │   ├── Fade.tsx
+│       │   └── Crossfade.tsx
+│       └── utils/
+│           ├── timing.ts
+│           └── interpolation.ts
+├── package.json                  # Own deps: express, remotion, zod, @supabase/supabase-js
+├── tsconfig.json
+├── Dockerfile                    # node:20-slim + ffmpeg + chromium
+└── render.yaml                   # Render.com deployment config
+```
+
+#### API Endpoints
+
+- **`POST /render`** — accepts `RenderJobPayload` (see `specs/008-remotion-pipeline/contracts/render-job.json`):
+  1. Validate `x-render-secret` header against `RENDER_WEBHOOK_SECRET`
+  2. Validate payload with Zod
+  3. Return `202 { jobId }` immediately (fire-and-forget)
+  4. Async pipeline:
+     - Download images + audio from signed Supabase URLs (`assets.ts`)
+     - POST stage update `sync` → `POST callbackUrl/stage`
+     - Bundle Remotion composition (`@remotion/bundler`)
+     - POST stage update `render` → `POST callbackUrl/stage`
+     - Render MP4 with `@remotion/renderer` (headless Chromium + FFmpeg)
+     - POST stage update `finalize` → `POST callbackUrl/stage`
+     - Upload MP4 to Supabase Storage `videos/{userId}/{videoId}.mp4` (`storage.ts`)
+     - POST completion → `POST callbackUrl` (`/api/video/render/complete`) with `{ videoId, status: "completed", outputUrl, fileSizeBytes, durationSeconds }`
+  5. On any error: POST failure → `POST callbackUrl` with `{ videoId, status: "failed", error }`
+
+- **`GET /health`** — liveness probe. Returns `{ status: "ok", timestamp: string }`
+
+- **`GET /status/:jobId`** — returns current job state from in-memory job map: `{ jobId, status: "queued"|"processing"|"completed"|"failed", stage, progress }`
+
+#### Security
+- All endpoints except `/health` require `x-render-secret` header matching `RENDER_WEBHOOK_SECRET`
+- Zod validation on all request bodies
+- No direct public access — only the main app calls this service
+
+#### Infrastructure
+- **`Dockerfile`**: `node:20-slim` base, install `ffmpeg` + `chromium` via apt, set `PUPPETEER_EXECUTABLE_PATH=/usr/bin/chromium`, `npm ci --only=production`, `EXPOSE 3001`
+- **`render.yaml`**: `type: web`, `runtime: docker`, `healthCheckPath: /health`, env vars: `SUPABASE_URL`, `SUPABASE_SERVICE_KEY`, `RENDER_WEBHOOK_SECRET`, `MAIN_APP_URL`, `PORT=3001`
+
+#### Environment Variables (`renderer/.env`)
+
+```
+PORT=3001
+RENDER_WEBHOOK_SECRET=          # shared with main app
+MAIN_APP_URL=                   # e.g. https://reelzero.vercel.app
+SUPABASE_URL=
+SUPABASE_SERVICE_KEY=           # service role key (bypasses RLS for upload)
+REMOTION_CONCURRENCY=2          # parallel frame renders
+REMOTION_OUTPUT_DIR=/tmp/renders
+```
+
+### Deliverable
+
+`renderer/` folder is fully scaffolded and functional. Running `npm run dev` inside
+`renderer/` starts the Express server on port 3001. A `POST /render` with a valid
+`RenderJobPayload` completes the full pipeline: downloads assets → renders MP4 →
+uploads to Supabase → calls back the main app. Deployed to Render.com via Docker.
+The main app's `RENDERER_SERVICE_URL` env var points to the Render.com URL and
+end-to-end video generation works.
+
+### Estimated Complexity
+
+High — Remotion renderer setup (headless Chrome + FFmpeg in Docker), async job
+management, Supabase service-role upload, callback flow, Render.com Docker deployment
+
+---
+
 ## Implementation Order
 
 ### Phase 1: Foundation (F001 → F002 → F003 → F004)
@@ -510,25 +618,27 @@ The core product experience. Wizard feeds into rendering.
 | F008 | Remotion Rendering Pipeline      | F007         | Very High  | 3     |
 | F009 | Video Dashboard & Library        | F008         | Medium     | 4     |
 | F010 | Landing Page                     | F001, F002   | Low-Medium | 4     |
+| F011 | Renderer Microservice            | F008         | High       | 5     |
 
 ---
 
 ## Implementation Status
 
-> Last reviewed: 2026-02-14. All 10 features are complete and MVP-ready.
+> Last reviewed: 2026-02-14. F001–F010 complete. F011 in progress.
 
-| ID   | Feature                          | Status     |
-|------|----------------------------------|------------|
-| F001 | Foundation & Scaffolding         | ✅ Complete |
-| F002 | Design System & Frontend Standards | ✅ Complete |
-| F003 | Authentication (Clerk)           | ✅ Complete |
-| F004 | Database & User Sync             | ✅ Complete |
-| F005 | AI Services (Script+Image+TTS)   | ✅ Complete |
-| F006 | Credit System & Stripe           | ✅ Complete |
-| F007 | Video Generation Wizard          | ✅ Complete |
-| F008 | Remotion Rendering Pipeline      | ✅ Complete |
-| F009 | Video Dashboard & Library        | ✅ Complete |
-| F010 | Landing Page                     | ✅ Complete |
+| ID   | Feature                          | Status          |
+|------|----------------------------------|-----------------|
+| F001 | Foundation & Scaffolding         | ✅ Complete      |
+| F002 | Design System & Frontend Standards | ✅ Complete    |
+| F003 | Authentication (Clerk)           | ✅ Complete      |
+| F004 | Database & User Sync             | ✅ Complete      |
+| F005 | AI Services (Script+Image+TTS)   | ✅ Complete      |
+| F006 | Credit System & Stripe           | ✅ Complete      |
+| F007 | Video Generation Wizard          | ✅ Complete      |
+| F008 | Remotion Rendering Pipeline      | ✅ Complete      |
+| F009 | Video Dashboard & Library        | ✅ Complete      |
+| F010 | Landing Page                     | ✅ Complete      |
+| F011 | Renderer Microservice            | 🚧 In Progress   |
 
 ### Resolved Implementation Notes
 - ✅ `userId` derived from `auth()` server-side on all API routes — never trusted from request body

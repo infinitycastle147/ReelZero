@@ -13,12 +13,12 @@
 
 ### 1.1 Multi-Service Architecture
 
-ReelZero uses a **microservice architecture** with two separate deployments:
+ReelZero uses a **monorepo microservice architecture** with two separate deployments from the same repository:
 
-| Service | Repository | Host | Purpose |
-|---------|------------|------|---------|
-| **Main App** | `ReelZero` | Vercel (free) | UI, Auth, Payments, AI generation |
-| **Renderer** | `ReelZero-Renderer` | Render.com (free/$7) | Video rendering with Remotion |
+| Service | Path | Host | Purpose |
+|---------|------|------|---------|
+| **Main App** | `src/` | Vercel (free) | UI, Auth, Payments, AI generation |
+| **Renderer** | `renderer/` | Render.com (free/$7) | Video rendering with Remotion |
 
 ### 1.2 System Diagram
 
@@ -1749,7 +1749,7 @@ REMOTION_OUTPUT_DIR=/tmp/renders
 │   SERVICE 1: MAIN APP           │     │   SERVICE 2: RENDERER           │
 │   ─────────────────────         │     │   ───────────────────           │
 │                                 │     │                                 │
-│   Repo: ReelZero                │     │   Repo: ReelZero-Renderer       │
+│   Monorepo: ReelZero/src/       │     │   Monorepo: ReelZero/renderer/  │
 │   Host: Vercel (Free)           │     │   Host: Render.com (Free/$7)    │
 │   URL: reelzero.vercel.app      │     │   URL: reelzero-renderer.       │
 │                                 │     │        onrender.com             │
@@ -1787,9 +1787,9 @@ REMOTION_OUTPUT_DIR=/tmp/renders
 │                    RENDERER SERVICE (Render.com)                             │
 └─────────────────────────────────────────────────────────────────────────────┘
 
-DIRECTORY STRUCTURE
-───────────────────
-reelzero-renderer/
+DIRECTORY STRUCTURE (inside monorepo at renderer/)
+──────────────────────────────────────────────────
+renderer/
 ├── src/
 │   ├── index.ts              # Express app entry
 │   ├── routes/
@@ -1978,7 +1978,7 @@ TIMING BREAKDOWN
 │                         CI/CD PIPELINES                                      │
 └─────────────────────────────────────────────────────────────────────────────┘
 
-MAIN APP (ReelZero → Vercel)          RENDERER (ReelZero-Renderer → Render)
+MAIN APP (ReelZero/src/ → Vercel)     RENDERER (ReelZero/renderer/ → Render.com)
 ────────────────────────────          ─────────────────────────────────────
 
 ┌─────────────┐                       ┌─────────────┐

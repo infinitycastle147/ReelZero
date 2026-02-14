@@ -1,0 +1,28 @@
+services:
+  - type: web
+    name: reelzero-renderer
+    runtime: docker
+    plan: starter
+    region: oregon
+    dockerfilePath: ./renderer/Dockerfile
+    # Build context is the monorepo root so the Dockerfile can access renderer/
+    dockerContext: .
+    healthCheckPath: /health
+    envVars:
+      # Non-secret configuration
+      - key: PORT
+        value: 3001
+      - key: REMOTION_CONCURRENCY
+        value: 2
+      - key: REMOTION_OUTPUT_DIR
+        value: /tmp/renders
+
+      # Secrets — set these in the Render.com dashboard (sync: false = manual entry)
+      - key: SUPABASE_URL
+        sync: false
+      - key: SUPABASE_SERVICE_KEY
+        sync: false
+      - key: RENDER_WEBHOOK_SECRET
+        sync: false
+      - key: MAIN_APP_URL
+        sync: false

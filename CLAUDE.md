@@ -19,6 +19,8 @@ Auto-generated from all feature plans. Last updated: 2026-02-11
 - Supabase PostgreSQL (videos, subscriptions, usage_tracking, uploaded_images) + Supabase Storage (videos, audio, images, thumbnails buckets) (009-video-dashboard)
 - TypeScript 5+ (strict mode) + Next.js 16+ (App Router), React 19, shadcn/ui (new-york/neutral), Tailwind CSS v4, `@clerk/nextjs` ^6 (existing), `lucide-react` (existing), `next/image` (built-in) (010-landing-page)
 - N/A — no database access; assets served from `public/` (010-landing-page)
+- TypeScript 5+ (strict mode), Node.js 20 + `express` ^4, `zod` ^3, `remotion` ^4.0.421, `@remotion/bundler` ^4.0.421, `@remotion/renderer` ^4.0.421, `@supabase/supabase-js` ^2, `tsx` (dev), `tsc-alias` (build) (011-renderer-microservice)
+- Supabase Storage (`videos` bucket for MP4 output; reads from `images` and `audio` buckets via signed URLs) (011-renderer-microservice)
 
 - TypeScript 5+ (strict mode), Next.js 16+ (App Router) + `@clerk/nextjs` (auth SDK), `svix` (webhook verification), `lucide-react` (icons), `shadcn/ui` (UI components) (001-clerk-auth)
 
@@ -38,9 +40,9 @@ npm test && npm run lint
 TypeScript 5+ (strict mode), Next.js 16+ (App Router): Follow standard conventions
 
 ## Recent Changes
+- 011-renderer-microservice: Added TypeScript 5+ (strict mode), Node.js 20 + `express` ^4, `zod` ^3, `remotion` ^4.0.421, `@remotion/bundler` ^4.0.421, `@remotion/renderer` ^4.0.421, `@supabase/supabase-js` ^2, `tsx` (dev), `tsc-alias` (build)
+- 011-renderer-microservice: Added [if applicable, e.g., PostgreSQL, CoreData, files or N/A]
 - 010-landing-page: Added TypeScript 5+ (strict mode) + Next.js 16+ (App Router), React 19, shadcn/ui (new-york/neutral), Tailwind CSS v4, `@clerk/nextjs` ^6 (existing), `lucide-react` (existing), `next/image` (built-in)
-- 009-video-dashboard: Added TypeScript 5+ (strict mode), Node.js ≥20 + Next.js 16.1.6 (App Router), React 19, Supabase JS v2, Clerk v6, Zustand v5, shadcn/ui (new-york), Tailwind CSS v4, Remotion Player (installed from F008), Recharts (via shadcn/ui chart — verify in package.json)
-- 008-remotion-pipeline: Added TypeScript 5+ (strict mode), Node.js ≥20 + Next.js 16.1.6 (App Router), React 19, `remotion` (new), `@remotion/player` (new), `@remotion/media` (new), `@clerk/nextjs` ^6 (existing), `@supabase/supabase-js` ^2 (existing), `zustand` ^5 (existing)
 
 
 <!-- MANUAL ADDITIONS START -->
