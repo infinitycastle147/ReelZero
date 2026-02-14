@@ -15,6 +15,7 @@ import type { RenderJobPayload, RenderScene } from "@/types/render";
 import type { Scene } from "@/types/scene";
 
 const RENDERER_SERVICE_URL = process.env.RENDERER_SERVICE_URL ?? "http://localhost:3001";
+const RENDER_WEBHOOK_SECRET = process.env.RENDER_WEBHOOK_SECRET ?? "";
 const DISPATCH_TIMEOUT_MS = 8000;
 
 /**
@@ -82,7 +83,10 @@ export async function dispatchToRenderer(
   try {
     response = await fetch(`${RENDERER_SERVICE_URL}/render`, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: {
+        "Content-Type": "application/json",
+        "x-render-secret": RENDER_WEBHOOK_SECRET,
+      },
       body: JSON.stringify(payload),
       signal: AbortSignal.timeout(DISPATCH_TIMEOUT_MS),
     });
