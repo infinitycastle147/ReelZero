@@ -2,6 +2,8 @@ services:
   - type: web
     name: reelzero-renderer
     runtime: docker
+    plan: starter
+    region: oregon
     dockerfilePath: ./renderer/Dockerfile
     # Build context is the monorepo root so the Dockerfile can access renderer/
     dockerContext: .
