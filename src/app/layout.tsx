@@ -10,6 +10,7 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
+  metadataBase: new URL("https://reelzero.ai"),
   title: "ReelZero",
   description:
     "AI-Powered Reel & Shorts Creator. Generate stunning 60-second vertical videos from text prompts.",
