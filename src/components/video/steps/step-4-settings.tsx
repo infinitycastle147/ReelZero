@@ -12,9 +12,9 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Separator } from "@/components/ui/separator";
-import { apiClient } from "@/lib/api/client";
 import { useCredits } from "@/hooks/useCredits";
 import { useVideoGeneration } from "@/hooks/useVideoGeneration";
+import { apiClient } from "@/lib/api/client";
 import { useVideoStore } from "@/store/video-store";
 import type { TransitionType } from "@/types/scene";
 
@@ -68,8 +68,24 @@ export function Step4Settings() {
     }
   };
 
-  const handleStartFresh = () => {
+  const [discarding, setDiscarding] = useState(false);
+
+  const handleStartFresh = async () => {
+    if (!processingVideoId) {
+      reset();
+      return;
+    }
+
+    setDiscarding(true);
+    try {
+      // Mark the stuck processing video as failed in the DB so the concurrent guard clears
+      await apiClient.post("/api/video/render/discard", { videoId: processingVideoId });
+    } catch {
+      // Best-effort — even if this fails, reset local state so user can retry
+    }
+    setProcessingVideoId(null);
     reset();
+    setDiscarding(false);
   };
 
   const handleBack = () => setStep(3);
@@ -115,8 +131,8 @@ export function Step4Settings() {
           <Button className="flex-1" onClick={handleResumeProgress}>
             Watch Progress
           </Button>
-          <Button variant="outline" className="flex-1" onClick={handleStartFresh}>
-            Discard &amp; Start Fresh
+          <Button variant="outline" className="flex-1" onClick={handleStartFresh} disabled={discarding}>
+            {discarding ? "Discarding…" : "Discard & Start Fresh"}
           </Button>
         </div>
       </div>

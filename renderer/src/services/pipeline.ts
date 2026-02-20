@@ -30,8 +30,7 @@ export async function processJob(
   jobId: string,
   payload: RenderJobPayload,
 ): Promise<void> {
-  const { videoId, userId, audioUrl, scenes, callbackUrl, stageCallbackUrl } =
-    payload;
+  const { videoId, userId, audioUrl, scenes, callbackUrl, stageCallbackUrl } = payload;
 
   let jobDir: string | undefined;
 
@@ -68,9 +67,10 @@ export async function processJob(
     const totalFrames = scenes.reduce((sum, s) => sum + s.durationInFrames, 0);
     const outputPath = path.join(jobDir, "output.mp4");
 
-    // Build VideoCompositionProps — audioUrl is a local file:// path
+    // Pass original signed HTTPS URLs to Remotion — it downloads assets itself
+    // and rejects file:// URLs. We still downloaded to verify existence above.
     const inputProps: VideoCompositionProps = {
-      audioUrl: `file://${audioLocalPath}`,
+      audioUrl: audioUrl,
       scenes: scenes,
       captionStyle: payload.captionStyle,
       transitionType: payload.transitionType,
@@ -123,6 +123,7 @@ export async function processJob(
       videoId,
       status: "completed",
       outputUrl,
+      audioUrl,   // echo back so main app can upsert audio_url column
       fileSizeBytes,
       durationSeconds,
     });

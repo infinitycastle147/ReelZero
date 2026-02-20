@@ -7,6 +7,7 @@ import type { NextRequest } from "next/server";
 
 import { createGenerationLog } from "@/lib/db/queries/generation-logs";
 import { refundCredit } from "@/lib/db/queries/subscriptions";
+import { getUserById } from "@/lib/db/queries/users";
 import { getVideoById, updateVideo } from "@/lib/db/queries/videos";
 import { AppError } from "@/lib/errors/app-error";
 import { ERROR_CODES } from "@/lib/errors/codes";
@@ -48,7 +49,11 @@ export const POST = withErrorHandler(async (request: NextRequest) => {
     );
   }
 
-  const userId = video.user_id;
+  const supabaseUserId = video.user_id;
+
+  // Resolve Supabase UUID → Clerk ID (refundCredit requires Clerk ID)
+  const dbUser = await getUserById(supabaseUserId);
+  const clerkUserId = dbUser?.clerk_user_id ?? null;
 
   if (body.status === "completed" && body.outputUrl) {
     // --- Success path ---
@@ -65,16 +70,22 @@ export const POST = withErrorHandler(async (request: NextRequest) => {
 
     if (!mp4Valid) {
       // MP4 validation failed — treat as render failure
-      await handleFailure(userId, body.videoId, "MP4 validation failed");
+      await handleFailure(clerkUserId, body.videoId, video, "MP4 validation failed");
       return NextResponse.json({ data: { received: true } });
     }
 
+    // storage_path = "{userId}/{videoId}.mp4" — same convention used by renderer/src/services/storage.ts
+    const storagePath = `${video.user_id}/${body.videoId}.mp4`;
+
     // Update video record as completed
-    // video_url stores the outputUrl (renderer provides a direct URL or storage path)
     await updateVideo(body.videoId, {
       status: "completed",
       current_stage: null,
       video_url: body.outputUrl,
+      storage_path: storagePath,
+      // Upsert audio_url if echoed back by renderer (belt-and-suspenders in case
+      // the write in POST /api/video/render didn't persist before the job completed)
+      ...(body.audioUrl ? { audio_url: body.audioUrl } : {}),
       duration_seconds: body.durationSeconds ?? null,
       file_size_bytes: body.fileSizeBytes ?? null,
     });
@@ -88,24 +99,39 @@ export const POST = withErrorHandler(async (request: NextRequest) => {
     });
   } else {
     // --- Failure path ---
-    await handleFailure(userId, body.videoId, body.error ?? "Render failed");
+    await handleFailure(clerkUserId, body.videoId, video, body.error ?? "Render failed");
   }
 
   return NextResponse.json({ data: { received: true } });
 });
 
-async function handleFailure(userId: string, videoId: string, errorMessage: string): Promise<void> {
-  await Promise.all([
+async function handleFailure(
+  clerkUserId: string | null,
+  videoId: string,
+  video: { metadata?: unknown },
+  errorMessage: string,
+): Promise<void> {
+  const existingMetadata = (video.metadata as Record<string, unknown>) ?? {};
+
+  const promises: Promise<unknown>[] = [
     updateVideo(videoId, {
       status: "failed",
       current_stage: null,
-      metadata: { renderError: errorMessage },
+      metadata: { ...existingMetadata, renderError: errorMessage },
     }),
-    refundCredit(userId),
     createGenerationLog({
       video_id: videoId,
       stage: "render",
       status: "error",
     }),
-  ]);
+  ];
+
+  // Only refund if we have a valid Clerk ID (refundCredit requires Clerk ID, not Supabase UUID)
+  if (clerkUserId) {
+    promises.push(refundCredit(clerkUserId));
+  } else {
+    console.error(`[render/complete] Cannot refund credit: no Clerk ID found for video ${videoId}`);
+  }
+
+  await Promise.all(promises);
 }

@@ -91,7 +91,7 @@ export async function generateSceneImages(
       successCount++;
     } catch (error: unknown) {
       const errorMessage =
-        error instanceof AppError ? error.message : "Unknown image generation error";
+        error instanceof Error ? error.message : "Unknown image generation error";
       results.push({
         sceneNumber: input.sceneNumber,
         status: "error",

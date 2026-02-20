@@ -25,9 +25,10 @@ renderRouter.post(
     const payload = req.body as RenderJobPayload;
     const { videoId, userId } = payload;
 
-    // Deduplicate by videoId (jobId is generated fresh by renderer)
+    // Deduplicate by videoId — only block if an active (non-terminal) job exists.
+    // Completed/failed jobs are ignored so the main app can re-dispatch after a failure.
     const existingJob = getJobByVideoId(videoId);
-    if (existingJob) {
+    if (existingJob && existingJob.status !== "completed" && existingJob.status !== "failed") {
       res.status(409).json({
         error: "Job with this videoId already exists",
         jobId: existingJob.jobId,

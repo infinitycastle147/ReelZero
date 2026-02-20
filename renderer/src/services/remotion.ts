@@ -2,12 +2,38 @@ import path from "path";
 
 import { bundle } from "@remotion/bundler";
 import { renderMedia, selectComposition } from "@remotion/renderer";
+import type { Configuration } from "webpack";
 
 import { updateJob } from "@/services/job-map";
 import type { VideoCompositionProps } from "@/types/remotion";
 
 /** Cached serve URL — bundle() is called once per process lifetime */
 let serveUrl: string | null = null;
+
+/**
+ * Absolute path to renderer/src — used by webpack to resolve the @/ alias.
+ * __dirname at runtime is renderer/dist/services, so go up two levels to renderer/,
+ * then into src/.
+ */
+const RENDERER_SRC = path.resolve(__dirname, "../../src");
+
+/**
+ * Webpack override that adds the @/ → renderer/src/ alias.
+ * Remotion's bundler uses its own webpack instance which does NOT read tsconfig paths.
+ * Without this, imports like `@/lib/constants/video` fail with "Module not found".
+ */
+function webpackOverride(currentConfig: Configuration): Configuration {
+  return {
+    ...currentConfig,
+    resolve: {
+      ...currentConfig.resolve,
+      alias: {
+        ...(currentConfig.resolve?.alias ?? {}),
+        "@": RENDERER_SRC,
+      },
+    },
+  };
+}
 
 /**
  * Return the Remotion webpack bundle serve URL.
@@ -17,10 +43,12 @@ let serveUrl: string | null = null;
 export async function getServeUrl(): Promise<string> {
   if (!serveUrl) {
     console.log("[remotion] Bundling Remotion compositions (first call)...");
+    console.log(`[remotion] Entry point: ${path.resolve(RENDERER_SRC, "remotion/Root.tsx")}`);
+    console.log(`[remotion] @/ alias → ${RENDERER_SRC}`);
     const start = Date.now();
     serveUrl = await bundle({
-      entryPoint: path.resolve(__dirname, "../remotion/Root.tsx"),
-      // No webpackOverride needed — Root.tsx uses same TS aliases as renderer tsconfig
+      entryPoint: path.resolve(RENDERER_SRC, "remotion/Root.tsx"),
+      webpackOverride,
     });
     console.log(
       `[remotion] Bundle complete in ${((Date.now() - start) / 1000).toFixed(1)}s. serveUrl: ${serveUrl}`,

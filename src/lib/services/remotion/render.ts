@@ -19,6 +19,28 @@ const RENDER_WEBHOOK_SECRET = process.env.RENDER_WEBHOOK_SECRET ?? "";
 const DISPATCH_TIMEOUT_MS = 8000;
 
 /**
+ * Given a Supabase signed URL (or bare storage path) for an image, extract
+ * the filename and regenerate a fresh 1-hour signed URL.
+ *
+ * Supabase signed URLs look like:
+ *   https://<project>.supabase.co/storage/v1/object/sign/images/<userId>/<filename>?token=...
+ *
+ * We parse the path segment after "/images/" to get "<userId>/<filename>",
+ * then take only the filename part (the userId is passed separately).
+ */
+async function getFreshSignedImageUrl(imageUrl: string, userId: string): Promise<string> {
+  // Extract filename from Supabase signed URL path: .../sign/images/{userId}/{filename}?token=...
+  const match = /\/images\/[^/]+\/([^?]+)/.exec(imageUrl);
+  if (match?.[1]) {
+    return getFileUrl("images", userId, match[1]);
+  }
+
+  // Fallback: bare storage path like "{userId}/{filename}" or just "{filename}"
+  const filename = imageUrl.split("/").pop() ?? imageUrl;
+  return getFileUrl("images", userId, filename);
+}
+
+/**
  * Build the render payload for a given video record.
  * Generates fresh signed Supabase URLs for all media assets (1hr expiry).
  * Calls getFileUrl which throws AppError(STORAGE_FILE_NOT_FOUND) on missing files —
@@ -40,7 +62,10 @@ export async function buildRenderPayload(
   // Calculate scene timings from audio alignment
   const renderScenes = calculateSceneTimings(scenes, wordAlignment, VIDEO_FRAME_RATE);
 
-  // Attach fresh signed image URLs to each render scene
+  // Attach FRESH signed image URLs to each render scene.
+  // scene.imageUrl is always a Supabase signed URL (1hr expiry) stored at wizard time —
+  // it may be hours old by render time. Extract the filename from the URL path and
+  // regenerate a fresh signed URL rather than reusing the possibly-expired one.
   const renderScenesWithUrls: RenderScene[] = await Promise.all(
     renderScenes.map(async (rs, idx) => {
       const scene = scenes[idx];
@@ -50,9 +75,8 @@ export async function buildRenderPayload(
           `Scene ${idx + 1} has no image URL`
         );
       }
-      // Extract storage path from imageUrl if it's already a path, or use as-is
-      const imageFilename = scene.imageUrl.split("/").pop() ?? scene.imageUrl;
-      const imageUrl = await getFileUrl("images", userId, imageFilename);
+
+      const imageUrl = await getFreshSignedImageUrl(scene.imageUrl, userId);
       return { ...rs, imageUrl };
     })
   );

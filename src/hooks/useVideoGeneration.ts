@@ -14,11 +14,13 @@ const ERROR_MESSAGES: Record<string, string> = {
   CREDIT_INSUFFICIENT: "You have no credits remaining.",
   GENERATION_SCRIPT_FAILED: "Script generation failed. Please try again.",
   GENERATION_IMAGE_FAILED: "Image generation failed. You can upload your own image instead.",
+  GENERATION_AUDIO_FAILED: "Audio generation failed. Please check your ElevenLabs API configuration.",
   QUOTA_EXCEEDED: "AI image generation quota exceeded. Please upload your own images to continue.",
   RENDER_SERVICE_UNAVAILABLE:
     "Video generation is temporarily unavailable. Please try again shortly.",
   RESOURCE_CONFLICT:
     "You already have a video being generated. Please wait for it to finish.",
+  VALIDATION_FAILED: "Validation failed. Please ensure all scenes have images.",
   VALIDATION_INVALID_INPUT: "Please check your inputs and try again.",
   AUTH_UNAUTHORIZED: "Your session has expired. Please sign in again.",
 };
@@ -75,6 +77,35 @@ export function useVideoGeneration() {
     setSceneImageStatus,
     updateScene,
   } = useVideoStore();
+
+  // -------------------------------------------------------------------------
+  // Helper: Sync Zustand state to database
+  // -------------------------------------------------------------------------
+  const syncToDatabase = useCallback(async (videoId: string): Promise<boolean> => {
+    try {
+      const state = useVideoStore.getState();
+      
+      // Save scenes in the same format expected by the render route
+      const scenesForDb = state.scenes.map((scene) => ({
+        id: scene.id,
+        order: scene.order,
+        narration: scene.narration,
+        visualDescription: scene.visualDescription,
+        imageUrl: scene.imageUrl,
+        imageSource: scene.imageSource,
+        duration: scene.duration,
+        imageStatus: scene.imageStatus,
+      }));
+
+      await apiClient.patch(`/api/video/${videoId}`, {
+        scenes: scenesForDb,
+      });
+
+      return true;
+    } catch {
+      return false;
+    }
+  }, []);
 
   // -------------------------------------------------------------------------
   // (a) createVideoRecord — POST /api/video, stores videoId in Zustand
@@ -148,10 +179,14 @@ export function useVideoGeneration() {
       }
 
       setScenes(mappedScenes);
+      
+      // Save scenes to database
+      await syncToDatabase(currentVideoId);
+      
       setStep(2);
       return true;
     },
-    [prompt, selectedTheme, setScenes, setStep]
+    [prompt, selectedTheme, setScenes, setStep, syncToDatabase]
   );
 
   // -------------------------------------------------------------------------
@@ -189,6 +224,12 @@ export function useVideoGeneration() {
             imageSource: "ai",
             imageStatus: "success",
           });
+          
+          // Sync updated scene to database
+          const currentVideoId = useVideoStore.getState().videoId;
+          if (currentVideoId) {
+            await syncToDatabase(currentVideoId);
+          }
         } else {
           setSceneImageStatus(sceneId, "error");
         }
@@ -196,7 +237,7 @@ export function useVideoGeneration() {
         setSceneImageStatus(sceneId, "error");
       }
     },
-    [setSceneImageStatus, updateScene]
+    [setSceneImageStatus, updateScene, syncToDatabase]
   );
 
   // -------------------------------------------------------------------------
@@ -270,7 +311,12 @@ export function useVideoGeneration() {
         setSceneImageStatus(scene.id, "error");
       }
     });
-  }, [setSceneImageStatus, updateScene]);
+    
+    // Sync all updated scenes to database
+    if (currentVideoId) {
+      await syncToDatabase(currentVideoId);
+    }
+  }, [setSceneImageStatus, updateScene, syncToDatabase]);
 
   // -------------------------------------------------------------------------
   // (e) submitVideoJob — POST /api/video/render
@@ -281,6 +327,13 @@ export function useVideoGeneration() {
 
     if (!state.videoId) {
       setError("Missing video ID. Please start over.");
+      return false;
+    }
+
+    // Ensure all data is synced to database before rendering
+    const synced = await syncToDatabase(state.videoId);
+    if (!synced) {
+      setError("Failed to save video data. Please try again.");
       return false;
     }
 
@@ -296,7 +349,7 @@ export function useVideoGeneration() {
     }
 
     return true;
-  }, []);
+  }, [syncToDatabase]);
 
   // -------------------------------------------------------------------------
   // (f) Composite: createVideoRecord + generateScript in one loading state

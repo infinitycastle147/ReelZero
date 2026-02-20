@@ -22,11 +22,16 @@
 .DS_Store
 *.pem
 
-# macOS Finder duplicates (e.g. "file 2.ts", "spec 2.md")
+# macOS Finder duplicates (e.g. "file 2.ts", "Dockerfile 2", ".gitignore 2")
 *[0-9].md
 *[0-9].ts
 *[0-9].tsx
 *[0-9].sql
+*[0-9].json
+*[0-9].yaml
+*[0-9].sh
+* [0-9]
+* [0-9].*
 
 # debug
 npm-debug.log*
@@ -51,6 +56,28 @@ next-env.d.ts
 # supabase
 /supabase/.temp/
 /supabase/.branches/
+# Auto-generated remote schema dumps (may conflict with intentional migrations)
+supabase/migrations/*_remote_schema.sql
+
+# Debug / one-off scripts (not part of the codebase)
+debug-*.ts
+fix-*.ts
+check-*.ts
+create-sample-*.ts
+test-*.ts
+test-*.mjs
+test-*.log
+*.log
+test-output/
+sample/
+DIAGNOSIS.md
+FIX_SUMMARY.md
+SOLUTION.md
+END_TO_END_TEST_RESULTS.md
+test-complete-flow.md
+
+# Large media files not part of the app
+public/images/landing/*.mp4
 
 # IDE
 .idea/

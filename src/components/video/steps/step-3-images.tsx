@@ -1,6 +1,6 @@
 "use client";
 
-import { Loader2 } from "lucide-react";
+import { Loader2, Sparkles } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { ImageSelector } from "@/components/video/image-selector";
@@ -56,12 +56,31 @@ export function Step3Images() {
             key={scene.id}
             className="overflow-hidden rounded-lg border bg-card"
           >
-            {/* Scene label */}
-            <div className="border-b px-3 py-2">
-              <p className="text-sm font-medium">Scene {index + 1}</p>
-              <p className="mt-0.5 line-clamp-1 text-xs text-muted-foreground">
-                {scene.visualDescription || scene.narration || "No description"}
-              </p>
+            {/* Scene label + per-scene generate button */}
+            <div className="flex items-start justify-between gap-2 border-b px-3 py-2">
+              <div className="min-w-0">
+                <p className="text-sm font-medium">Scene {index + 1}</p>
+                <p className="mt-0.5 line-clamp-1 text-xs text-muted-foreground">
+                  {scene.visualDescription || scene.narration || "No description"}
+                </p>
+              </div>
+              <Button
+                size="sm"
+                variant="ghost"
+                className="h-7 shrink-0 px-2 text-xs"
+                disabled={scene.imageStatus === "loading"}
+                onClick={() => generateSceneImage(scene.id)}
+                title="Generate image for this scene with AI"
+              >
+                {scene.imageStatus === "loading" ? (
+                  <Loader2 className="h-3 w-3 animate-spin" />
+                ) : (
+                  <>
+                    <Sparkles className="mr-1 h-3 w-3" />
+                    {scene.imageUrl ? "Regenerate" : "Generate"}
+                  </>
+                )}
+              </Button>
             </div>
 
             {/* Per-scene loading overlay — replaces selector while generating */}

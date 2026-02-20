@@ -42,11 +42,18 @@ export default async function VideoDetailPage({
 
   // Sign the video URL for playback (completed videos only)
   let signedVideoUrl: string | null = null;
-  if (video.status === "completed" && video.storage_path) {
-    const parts = video.storage_path.split("/");
-    const filename = parts.slice(1).join("/");
-    const uidPart = parts[0] ?? dbUser.id;
-    signedVideoUrl = await getFileUrl("videos", uidPart, filename);
+  if (video.status === "completed") {
+    if (video.storage_path) {
+      // Preferred: generate a fresh signed URL from the known storage path
+      const parts = video.storage_path.split("/");
+      const filename = parts.slice(1).join("/");
+      const uidPart = parts[0] ?? dbUser.id;
+      signedVideoUrl = await getFileUrl("videos", uidPart, filename);
+    } else if (video.video_url) {
+      // Fallback for older videos where storage_path wasn't stored: use video_url directly.
+      // This may be an expired signed URL — but it's better than showing a failure message.
+      signedVideoUrl = video.video_url;
+    }
   }
 
   const title = video.title || video.prompt.slice(0, 80);

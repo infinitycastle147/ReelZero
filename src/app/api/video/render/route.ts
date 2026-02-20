@@ -97,9 +97,47 @@ export const POST = withErrorHandler(async (request: NextRequest) => {
       scenes?: Scene[];
     };
 
-    const wordAlignment = metadata.wordAlignment ?? [];
-    const audioStoragePath = metadata.audioStoragePath ?? "";
     const scenes = (metadata.scenes ?? []) as Scene[];
+    
+    // Validate scenes exist
+    if (scenes.length === 0) {
+      throw new AppError(
+        ERROR_CODES.VALIDATION_FAILED,
+        "No scenes found. Please complete the wizard first."
+      );
+    }
+    
+    // Validate all scenes have images
+    const missingImages = scenes.filter(s => !s.imageUrl);
+    if (missingImages.length > 0) {
+      throw new AppError(
+        ERROR_CODES.VALIDATION_FAILED,
+        `${missingImages.length} scene(s) missing images. Please generate or upload images for all scenes.`
+      );
+    }
+    
+    // FR-002: Generate audio with word alignment BEFORE rendering
+    // Combine all scene narrations into one audio file
+    const narrationText = scenes.map(s => s.narration).join(" ");
+    const voiceId = (metadata as { voice?: string }).voice ?? "voice_echo";
+    
+    console.log(`[render] Generating audio for video ${body.videoId}...`);
+    
+    // Import generateAudio dynamically to avoid circular dependencies
+    const { generateAudio } = await import("@/lib/ai/tts");
+    
+    const audioResult = await generateAudio({
+      narrationText,
+      voiceId,
+      videoId: body.videoId,
+      userId: dbUser.id, // Supabase UUID — storage paths use UUID folders, not Clerk ID
+    });
+    
+    console.log(`[render] Audio generated: ${audioResult.storageUrl}`);
+    
+    const wordAlignment = audioResult.alignment;
+    const audioStoragePath = audioResult.storagePath;
+    
     // T042: Derive watermark from subscription tier (FR-012 — free tier gets watermark)
     const subscription = await getSubscriptionByClerkUserId(userId);
     const showWatermark = !subscription || subscription.tier === "free";
@@ -107,14 +145,15 @@ export const POST = withErrorHandler(async (request: NextRequest) => {
     // Determine callback base URL
     const callbackBaseUrl =
       process.env["NEXT_PUBLIC_APP_URL"] ??
-      process.env["VERCEL_URL"] ?
-        `https://${process.env["VERCEL_URL"]}` :
-        "http://localhost:3000";
+      (process.env["VERCEL_URL"]
+        ? `https://${process.env["VERCEL_URL"]}`
+        : "http://localhost:3000");
 
     // Build render payload (fetches signed URLs, calculates timings)
+    // dbUser.id = Supabase UUID — matches the storage folder used during image/audio upload
     const payload = await buildRenderPayload(
       video,
-      userId,
+      dbUser.id,
       wordAlignment,
       scenes,
       audioStoragePath,
@@ -125,14 +164,18 @@ export const POST = withErrorHandler(async (request: NextRequest) => {
     // Dispatch to renderer (fire-and-forget — returns jobId immediately)
     await dispatchToRenderer(payload);
 
-    // Update current_stage to 'audio' and record start time for timeout tracking (T030)
+    // Update current_stage and save audio as a first-class column.
+    // audioStoragePath is kept in metadata for the deletion logic in deleteVideoWithStorage.
     await updateVideo(body.videoId, {
-      current_stage: "audio",
+      current_stage: "sync",
+      audio_url: audioResult.storageUrl,
       metadata: {
         ...(video.metadata as object),
         renderStartedAt: new Date().toISOString(),
         captionStyle: payload.captionStyle,
         transitionType: payload.transitionType,
+        audioStoragePath,
+        wordAlignment,
       },
     });
 

@@ -111,20 +111,41 @@ export async function generateAudio(input: GenerateAudioInput): Promise<Generate
       });
 
       if (!response.ok) {
-        // Content-policy or quota rejections (403/422)
-        if (response.status === 403 || response.status === 422) {
-          const errorBody = (await response.json().catch(() => ({}))) as {
-            detail?: { message?: string };
-          };
+        const errorBody = (await response.json().catch(() => ({}))) as {
+          detail?: { message?: string } | string;
+          status?: string;
+        };
+
+        const detailMessage =
+          typeof errorBody.detail === "string"
+            ? errorBody.detail
+            : errorBody.detail?.message;
+
+        console.error(
+          `[tts] ElevenLabs ${response.status} error:`,
+          JSON.stringify(errorBody),
+        );
+
+        // 401/403 — auth or quota exhausted (do not retry)
+        if (response.status === 401 || response.status === 403) {
           throw new AppError(
             ERROR_CODES.GENERATION_AUDIO_FAILED,
-            errorBody.detail?.message ??
-              "Audio generation was rejected. Please check your text content or account quota.",
+            detailMessage ??
+              `ElevenLabs ${response.status}: authentication failed or quota exhausted.`,
+          );
+        }
+
+        // 422 — content policy / invalid input (do not retry)
+        if (response.status === 422) {
+          throw new AppError(
+            ERROR_CODES.GENERATION_AUDIO_FAILED,
+            detailMessage ??
+              "Audio generation was rejected. Please check your text content.",
           );
         }
 
         throw new RetryableError(
-          `ElevenLabs API error: ${response.status}`,
+          detailMessage ?? `ElevenLabs API error: ${response.status}`,
           response.status,
         );
       }

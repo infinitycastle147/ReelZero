@@ -234,22 +234,48 @@ export async function deleteVideoWithStorage(videoId: string, userId: string): P
   }
 
   // All storage files deleted — now remove DB records
-  await deleteVideo(videoId);
+  // Delete child rows first to satisfy FK constraint (uploaded_images_video_id_fkey)
   await deleteUploadedImagesByVideoId(videoId);
+  await deleteVideo(videoId);
 }
 
 /**
  * F008: Concurrent render guard.
- * Returns the first video with status='processing' for the given user, or null.
+ * Returns the first video actively being rendered for the given user, or null.
  * Used to enforce FR-018: max 1 concurrent render per user.
+ *
+ * Only considers videos that have actually been dispatched to the renderer
+ * (i.e. have metadata.renderStartedAt set). Videos created by the wizard
+ * start as status='processing' but don't have renderStartedAt until dispatch.
+ *
+ * Includes a 30-minute timeout safety net: if a video has been rendering for
+ * more than 30 minutes, it's automatically marked as failed.
  */
 export async function getProcessingVideoByUserId(userId: string): Promise<Video | null> {
   const supabase = createSupabaseAdmin();
+
+  // Safety net: auto-fail videos stuck rendering >30 min
+  const thirtyMinutesAgo = new Date(Date.now() - 30 * 60 * 1000).toISOString();
+  await supabase
+    .from("videos")
+    .update({
+      status: "failed",
+      current_stage: null,
+      updated_at: new Date().toISOString(),
+    })
+    .eq("user_id", userId)
+    .eq("status", "processing")
+    .not("metadata->>renderStartedAt", "is", null)
+    .lt("metadata->>renderStartedAt", thirtyMinutesAgo);
+
+  // Only find videos that have been dispatched to the renderer (have renderStartedAt)
+  // This excludes wizard drafts that are status='processing' but haven't started rendering
   const { data: video, error } = await supabase
     .from("videos")
     .select()
     .eq("user_id", userId)
     .eq("status", "processing")
+    .not("metadata->>renderStartedAt", "is", null)
     .order("created_at", { ascending: false })
     .limit(1)
     .maybeSingle();

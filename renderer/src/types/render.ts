@@ -40,10 +40,11 @@ export type WordFrameTiming = {
 export type RenderCompleteCallback = {
   videoId: string;
   status: "completed" | "failed";
-  outputUrl?: string; // Supabase storage path when completed
+  outputUrl?: string;    // Supabase signed URL for the rendered MP4
+  audioUrl?: string;     // Echoed back from RenderJobPayload — lets main app upsert audio_url
   fileSizeBytes?: number;
   durationSeconds?: number;
-  error?: string; // Human-readable error when failed
+  error?: string;        // Human-readable error when failed
 };
 
 /** Render stage update callback body from microservice → main app */

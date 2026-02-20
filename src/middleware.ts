@@ -6,6 +6,9 @@ const isPublicRoute = createRouteMatcher([
   "/sign-in(.*)",
   "/sign-up(.*)",
   "/api/auth/webhook",
+  // Renderer microservice callbacks — authenticated via x-render-secret, not Clerk
+  "/api/video/render/complete",
+  "/api/video/render/stage",
 ]);
 
 const isAuthRoute = createRouteMatcher(["/sign-in(.*)", "/sign-up(.*)"]);

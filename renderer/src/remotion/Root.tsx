@@ -6,7 +6,7 @@
  * This file is only needed by the renderer bundler entry point.
  */
 
-import { Composition } from "remotion";
+import { Composition, registerRoot } from "remotion";
 
 import {
   VIDEO_FRAME_RATE,
@@ -40,3 +40,5 @@ export function RemotionRoot() {
     />
   );
 }
+
+registerRoot(RemotionRoot);

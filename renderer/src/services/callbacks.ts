@@ -2,6 +2,8 @@ import type { RenderCompleteCallback } from "@/types/render";
 
 type StageValue = "sync" | "render" | "finalize";
 
+const RENDER_WEBHOOK_SECRET = process.env.RENDER_WEBHOOK_SECRET ?? "";
+
 /**
  * Fire a stage update callback to the main app.
  * Fire-and-forget — does NOT await, errors are logged but do not block rendering.
@@ -15,7 +17,10 @@ export function fireStageCallback(
   const body = JSON.stringify({ videoId, stage });
   fetch(stageCallbackUrl, {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers: {
+      "Content-Type": "application/json",
+      "x-render-secret": RENDER_WEBHOOK_SECRET,
+    },
     body,
   }).catch((err: unknown) => {
     console.warn(
@@ -39,7 +44,10 @@ export async function fireCompletionCallback(
     try {
       const response = await fetch(callbackUrl, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          "x-render-secret": RENDER_WEBHOOK_SECRET,
+        },
         body,
       });
 

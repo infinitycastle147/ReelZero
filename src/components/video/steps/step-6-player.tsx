@@ -2,20 +2,24 @@
 // F008: Step 6 — Video Player
 // Shown after render completes. Displays the finished video with download.
 
-import { VideoPlayer } from "@/components/video/video-player";
+import { useEffect } from "react";
+
+import { Button } from "@/components/ui/button";
 import { useRenderPolling } from "@/hooks/use-render-polling";
 import { useVideoStore } from "@/store/video-store";
-import type { VideoCompositionProps } from "@/types/remotion";
 
 export function Step6Player() {
-  const {
-    videoId,
-    captionStyle,
-    transitionType,
-  } = useVideoStore();
+  const { videoId, notifyGenerationComplete } = useVideoStore();
 
-  // Get the latest status (for videoUrl)
+  // Poll for render completion and get the video URL
   const pollResult = useRenderPolling(videoId, videoId !== null);
+
+  // Notify store so credit display refreshes
+  useEffect(() => {
+    if (pollResult?.videoUrl) {
+      notifyGenerationComplete();
+    }
+  }, [pollResult?.videoUrl, notifyGenerationComplete]);
 
   if (!videoId || !pollResult?.videoUrl) {
     return (
@@ -25,23 +29,26 @@ export function Step6Player() {
     );
   }
 
-  // Build composition props from store state + render data
-  const compositionProps: VideoCompositionProps = {
-    audioUrl: "", // Audio is embedded in the rendered MP4; not needed for Player playback of the mp4
-    scenes: [], // The rendered MP4 is played directly — scenes/timing not needed here
-    captionStyle,
-    transitionType,
-    showWatermark: false,
-  };
-
   return (
     <div className="space-y-4">
       <h2 className="text-lg font-semibold">Your Video Is Ready!</h2>
-      <VideoPlayer
-        videoId={videoId}
-        videoUrl={pollResult.videoUrl}
-        compositionProps={compositionProps}
+      {/* Use a native <video> element — the rendered MP4 has audio baked in.
+          Remotion Player is not used here because it re-renders the composition
+          (including <Audio src="">) which throws an Html5Audio error. */}
+      <video
+        src={pollResult.videoUrl}
+        controls
+        playsInline
+        className="w-full max-w-sm mx-auto rounded-lg border bg-black"
+        style={{ aspectRatio: "9/16" }}
       />
+      <div className="flex justify-center">
+        <Button asChild>
+          <a href={pollResult.videoUrl} download="video.mp4">
+            Download MP4
+          </a>
+        </Button>
+      </div>
     </div>
   );
 }
