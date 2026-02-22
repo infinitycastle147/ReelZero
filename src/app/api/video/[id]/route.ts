@@ -18,7 +18,7 @@ type UpdateVideoMetadataRequest = {
 // PATCH /api/video/[id] — Update video metadata
 export const PATCH = withErrorHandler(async (
   request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
+  context: unknown,
 ) => {
   const { userId: clerkUserId } = await auth();
 
@@ -26,7 +26,7 @@ export const PATCH = withErrorHandler(async (
     throw new AppError(ERROR_CODES.AUTH_UNAUTHORIZED);
   }
 
-  const { id: videoId } = await params;
+  const { id: videoId } = (context as { params: { id: string } }).params;
 
   // Resolve Clerk ID → Supabase UUID
   const dbUser = await getUserByClerkId(clerkUserId);
@@ -61,7 +61,7 @@ export const PATCH = withErrorHandler(async (
 // GET /api/video/[id] — Get video by ID
 export const GET = withErrorHandler(async (
   _request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
+  context: unknown,
 ) => {
   const { userId: clerkUserId } = await auth();
 
@@ -69,7 +69,7 @@ export const GET = withErrorHandler(async (
     throw new AppError(ERROR_CODES.AUTH_UNAUTHORIZED);
   }
 
-  const { id: videoId } = await params;
+  const { id: videoId } = (context as { params: { id: string } }).params;
 
   // Resolve Clerk ID → Supabase UUID
   const dbUser = await getUserByClerkId(clerkUserId);

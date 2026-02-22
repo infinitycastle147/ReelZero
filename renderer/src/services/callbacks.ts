@@ -3,6 +3,7 @@ import type { RenderCompleteCallback } from "@/types/render";
 type StageValue = "sync" | "render" | "finalize";
 
 const RENDER_WEBHOOK_SECRET = process.env.RENDER_WEBHOOK_SECRET ?? "";
+const INTERNAL_API_SECRET = process.env.INTERNAL_API_SECRET ?? RENDER_WEBHOOK_SECRET;
 
 /**
  * Fire a stage update callback to the main app.
@@ -73,6 +74,54 @@ export async function fireCompletionCallback(
   console.error(
     `[callbacks] Completion callback permanently failed for videoId=${payload.videoId}`,
   );
+
+  // ── Fallback: direct PATCH ──────────────────────────────────────────────────
+  // The completion webhook failed (app may be temporarily down / cold-starting).
+  // If the render succeeded, patch the video record directly via the internal API
+  // so it doesn't stay stuck as "failed" even though the MP4 is safely in storage.
+  if (payload.status === "completed" && payload.outputUrl) {
+    await patchVideoFallback(callbackUrl, payload);
+  }
+}
+
+/**
+ * Last-resort direct PATCH to /api/video/render/complete-fallback.
+ * Derives the fallback URL from the callbackUrl base (strips the path).
+ */
+async function patchVideoFallback(
+  callbackUrl: string,
+  payload: RenderCompleteCallback,
+): Promise<void> {
+  try {
+    // Derive base URL: "https://app.example.com/api/video/render/complete"
+    // → "https://app.example.com/api/video/render/complete-fallback"
+    const fallbackUrl = callbackUrl.replace(/\/complete$/, "/complete-fallback");
+
+    const response = await fetch(fallbackUrl, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "x-render-secret": INTERNAL_API_SECRET,
+      },
+      body: JSON.stringify(payload),
+      signal: AbortSignal.timeout(10_000),
+    });
+
+    if (response.ok) {
+      console.log(
+        `[callbacks] Fallback PATCH succeeded for videoId=${payload.videoId}`,
+      );
+    } else {
+      console.error(
+        `[callbacks] Fallback PATCH also failed for videoId=${payload.videoId}: HTTP ${response.status}`,
+      );
+    }
+  } catch (err) {
+    console.error(
+      `[callbacks] Fallback PATCH threw for videoId=${payload.videoId}:`,
+      err instanceof Error ? err.message : String(err),
+    );
+  }
 }
 
 function sleep(ms: number): Promise<void> {
