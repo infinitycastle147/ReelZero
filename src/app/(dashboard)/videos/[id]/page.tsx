@@ -14,6 +14,7 @@ import { Button } from "@/components/ui/button";
 import { VideoDetailActions } from "@/components/video/video-detail-actions";
 import { VideoDetailMetadata } from "@/components/video/video-detail-metadata";
 import { VideoDetailPoller } from "@/components/video/video-detail-poller";
+import { VideoRetryButton } from "@/components/video/video-retry-button";
 import { getUserByClerkId } from "@/lib/db/queries/users";
 import { getVideoById } from "@/lib/db/queries/videos";
 import { getFileUrl } from "@/lib/db/storage";
@@ -57,6 +58,19 @@ export default async function VideoDetailPage({
   }
 
   const title = video.title || video.prompt.slice(0, 80);
+
+  // Determine if this failed video has enough saved metadata to do a render-only retry
+  // (i.e. the original run completed audio + scene generation but failed at upload/render)
+  const metadata = video.metadata as {
+    audioStoragePath?: string;
+    wordAlignment?: unknown[];
+    scenes?: unknown[];
+  };
+  const canRetryRender =
+    video.status === "failed" &&
+    !!metadata.audioStoragePath &&
+    Array.isArray(metadata.wordAlignment) && metadata.wordAlignment.length > 0 &&
+    Array.isArray(metadata.scenes) && metadata.scenes.length > 0;
 
   return (
     <div className="space-y-6">
@@ -126,14 +140,21 @@ export default async function VideoDetailPage({
         <div className="flex min-h-[240px] flex-col items-center justify-center gap-3 rounded-xl border border-dashed border-destructive/40 bg-destructive/5 text-center">
           <p className="text-sm font-medium text-destructive">Video generation failed</p>
           <p className="text-xs text-muted-foreground">
-            Something went wrong during rendering.
+            {canRetryRender
+              ? "Rendering failed but your audio and scenes are saved. You can retry the render without regenerating anything."
+              : "Something went wrong during generation."}
           </p>
-          <Button variant="outline" size="sm" asChild>
-            <Link href={`/create?regenerateFrom=${video.id}`}>
-              <RefreshCw className="mr-1.5 h-4 w-4" />
-              Try Again
-            </Link>
-          </Button>
+          <div className="flex gap-2">
+            {canRetryRender && (
+              <VideoRetryButton videoId={video.id} />
+            )}
+            <Button variant="outline" size="sm" asChild>
+              <Link href={`/create?regenerateFrom=${video.id}`}>
+                <RefreshCw className="mr-1.5 h-4 w-4" />
+                Start Over
+              </Link>
+            </Button>
+          </div>
         </div>
       )}
 
