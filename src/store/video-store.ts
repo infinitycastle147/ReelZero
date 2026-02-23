@@ -2,7 +2,7 @@ import { arrayMove } from "@dnd-kit/sortable";
 import { create } from "zustand";
 import { persist, type StorageValue } from "zustand/middleware";
 
-import { MIN_SCENES } from "@/lib/constants/video";
+import { MAX_SCENES, MIN_SCENES } from "@/lib/constants/video";
 import type { RenderStage } from "@/types/render";
 import type { CaptionStyle, ImageStatus, Scene, TransitionType } from "@/types/scene";
 
@@ -13,6 +13,7 @@ type VideoStoreState = {
   selectedTheme: string | null;
   captionStyle: CaptionStyle;
   transitionType: TransitionType;
+  selectedSceneCount: number;
   scenes: Scene[];
   isGenerating: boolean;
   generationProgress: number;
@@ -34,6 +35,7 @@ type VideoStoreActions = {
   setTheme: (theme: string) => void;
   setCaptionStyle: (style: CaptionStyle) => void;
   setTransitionType: (type: TransitionType) => void;
+  setSceneCount: (count: number) => void;
   setScenes: (scenes: Scene[]) => void;
   updateScene: (id: string, updates: Partial<Scene>) => void;
   addScene: () => void;
@@ -67,6 +69,7 @@ const INITIAL_STATE: VideoStoreState = {
   selectedTheme: null,
   captionStyle: "word-by-word",
   transitionType: "fade",
+  selectedSceneCount: MAX_SCENES,
   scenes: [],
   isGenerating: false,
   generationProgress: 0,
@@ -132,6 +135,8 @@ export const useVideoStore = create<VideoStoreState & VideoStoreActions>()(
       setCaptionStyle: (style) => set({ captionStyle: style }),
 
       setTransitionType: (type) => set({ transitionType: type }),
+
+      setSceneCount: (count) => set({ selectedSceneCount: count }),
 
       setScenes: (scenes) => set({ scenes }),
 
@@ -248,6 +253,7 @@ export const useVideoStore = create<VideoStoreState & VideoStoreActions>()(
           selectedTheme: state.selectedTheme,
           captionStyle: state.captionStyle,
           transitionType: state.transitionType,
+          selectedSceneCount: state.selectedSceneCount,
           scenes: state.scenes,
         }) as StoreState,
       onRehydrateStorage: () => (state) => {

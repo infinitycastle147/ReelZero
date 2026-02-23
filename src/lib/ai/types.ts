@@ -97,6 +97,7 @@ export type GenerateScriptInput = {
   prompt: string;
   theme: ScriptTheme;
   videoId: string;
+  sceneCount?: number;
 };
 
 // ── Scene Image Generation ───────────────────────────────────────────────────

@@ -16,6 +16,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { useVideoGeneration } from "@/hooks/useVideoGeneration";
 import type { ScriptTheme } from "@/lib/ai/types";
 import { PROMPT_MAX_LENGTH, PROMPT_MIN_LENGTH } from "@/lib/constants/ai";
+import { MAX_SCENES, MIN_SCENES } from "@/lib/constants/video";
 import { VOICE_OPTIONS } from "@/lib/constants/voices";
 import { useVideoStore } from "@/store/video-store";
 import type { CaptionStyle } from "@/types/scene";
@@ -34,17 +35,24 @@ const CAPTION_STYLE_OPTIONS: { value: CaptionStyle; label: string }[] = [
   { value: "none", label: "None" },
 ];
 
+const SCENE_COUNT_OPTIONS = Array.from(
+  { length: MAX_SCENES - MIN_SCENES + 1 },
+  (_, i) => MIN_SCENES + i,
+);
+
 export function Step1Input() {
   const {
     prompt,
     selectedVoice,
     selectedTheme,
     captionStyle,
+    selectedSceneCount,
     isGenerating,
     setPrompt,
     setVoice,
     setTheme,
     setCaptionStyle,
+    setSceneCount,
   } = useVideoStore();
 
   const { createAndGenerateScript, error } = useVideoGeneration();
@@ -122,7 +130,7 @@ export function Step1Input() {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-4">
         {/* Voice */}
         <div className="space-y-2">
           <Label htmlFor="voice">Voice</Label>
@@ -177,6 +185,26 @@ export function Step1Input() {
               {CAPTION_STYLE_OPTIONS.map((c) => (
                 <SelectItem key={c.value} value={c.value}>
                   {c.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+
+        {/* Scene Count */}
+        <div className="space-y-2">
+          <Label htmlFor="scene-count">Scenes</Label>
+          <Select
+            value={String(selectedSceneCount)}
+            onValueChange={(val) => setSceneCount(Number(val))}
+          >
+            <SelectTrigger id="scene-count" aria-label="Select number of scenes">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {SCENE_COUNT_OPTIONS.map((n) => (
+                <SelectItem key={n} value={String(n)}>
+                  {n} scenes
                 </SelectItem>
               ))}
             </SelectContent>

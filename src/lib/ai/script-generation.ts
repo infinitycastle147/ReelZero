@@ -31,7 +31,7 @@ type RawGeminiScript = {
   scenes: RawGeminiScene[];
 };
 
-function parseAndValidateScript(text: string): GeneratedScript {
+function parseAndValidateScript(text: string, expectedSceneCount: number): GeneratedScript {
   let raw: RawGeminiScript;
 
   try {
@@ -44,10 +44,10 @@ function parseAndValidateScript(text: string): GeneratedScript {
   }
 
   // Validate scene count
-  if (!raw.scenes || raw.scenes.length < MIN_SCENES || raw.scenes.length > MAX_SCENES) {
+  if (!raw.scenes || raw.scenes.length < MIN_SCENES || raw.scenes.length > expectedSceneCount) {
     throw new AppError(
       ERROR_CODES.GENERATION_SCRIPT_FAILED,
-      `Expected ${MIN_SCENES}-${MAX_SCENES} scenes, got ${raw.scenes?.length ?? 0}`,
+      `Expected ${MIN_SCENES}-${expectedSceneCount} scenes, got ${raw.scenes?.length ?? 0}`,
     );
   }
 
@@ -111,11 +111,13 @@ export async function generateScript(input: GenerateScriptInput): Promise<Genera
   const startTime = Date.now();
 
   try {
+    const resolvedSceneCount = input.sceneCount ?? MAX_SCENES;
+
     // Build prompt from template
     const prompt = buildScriptPrompt({
       topic: input.prompt,
       theme: input.theme,
-      sceneCount: MAX_SCENES,
+      sceneCount: resolvedSceneCount,
       targetDuration: VIDEO_DURATION_RANGE.max,
     });
 
@@ -126,7 +128,7 @@ export async function generateScript(input: GenerateScriptInput): Promise<Genera
     });
 
     // Parse and validate the script output
-    const script = parseAndValidateScript(result.text);
+    const script = parseAndValidateScript(result.text, resolvedSceneCount);
 
     // Auto-log: mark success
     const durationMs = Date.now() - startTime;

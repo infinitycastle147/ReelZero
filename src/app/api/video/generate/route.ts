@@ -5,6 +5,7 @@ import type { NextRequest } from "next/server";
 import { generateScript } from "@/lib/ai/script-generation";
 import type { ScriptTheme } from "@/lib/ai/types";
 import { PROMPT_MAX_LENGTH, PROMPT_MIN_LENGTH } from "@/lib/constants/ai";
+import { MAX_SCENES, MIN_SCENES } from "@/lib/constants/video";
 import { checkCredits, refundCredit, reserveCredit } from "@/lib/db/queries/subscriptions";
 import { AppError } from "@/lib/errors/app-error";
 import { ERROR_CODES } from "@/lib/errors/codes";
@@ -22,6 +23,7 @@ type GenerateRequestBody = {
   prompt: string;
   theme: ScriptTheme;
   videoId: string;
+  sceneCount?: number;
 };
 
 export const POST = withErrorHandler(async (request: NextRequest) => {
@@ -59,6 +61,19 @@ export const POST = withErrorHandler(async (request: NextRequest) => {
     throw new AppError(ERROR_CODES.VALIDATION_MISSING_FIELD, "videoId is required");
   }
 
+  if (
+    body.sceneCount !== undefined &&
+    (typeof body.sceneCount !== "number" ||
+      !Number.isInteger(body.sceneCount) ||
+      body.sceneCount < MIN_SCENES ||
+      body.sceneCount > MAX_SCENES)
+  ) {
+    throw new AppError(
+      ERROR_CODES.VALIDATION_INVALID_INPUT,
+      `sceneCount must be an integer between ${MIN_SCENES} and ${MAX_SCENES}`,
+    );
+  }
+
   // Credit enforcement: check and reserve before any AI calls (FR-006, FR-007)
   const creditCheck = await checkCredits(userId);
   if (!creditCheck.canGenerate) {
@@ -76,6 +91,7 @@ export const POST = withErrorHandler(async (request: NextRequest) => {
       prompt: body.prompt,
       theme: body.theme,
       videoId: body.videoId,
+      sceneCount: body.sceneCount,
     });
   } catch (err) {
     // Refund credit on any generation failure

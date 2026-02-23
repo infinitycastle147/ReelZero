@@ -3,7 +3,7 @@
 import { useState, useCallback } from "react";
 
 import { apiClient } from "@/lib/api/client";
-import { MAX_SCENES, MIN_SCENES } from "@/lib/constants/video";
+import { MIN_SCENES } from "@/lib/constants/video";
 import { useVideoStore } from "@/store/video-store";
 import type { Scene } from "@/types/scene";
 
@@ -71,6 +71,7 @@ export function useVideoGeneration() {
     selectedVoice,
     selectedTheme,
     captionStyle,
+    selectedSceneCount,
     setVideoId,
     setScenes,
     setStep,
@@ -140,6 +141,7 @@ export function useVideoGeneration() {
         prompt,
         theme: selectedTheme,
         videoId: currentVideoId,
+        sceneCount: selectedSceneCount,
       });
 
       if (response.error) {
@@ -147,10 +149,10 @@ export function useVideoGeneration() {
         return false;
       }
 
-      // Normalise scene count to [MIN_SCENES, MAX_SCENES]
+      // Normalise scene count to [MIN_SCENES, selectedSceneCount]
       let apiScenes = response.data.scenes;
-      if (apiScenes.length > MAX_SCENES) {
-        apiScenes = apiScenes.slice(0, MAX_SCENES);
+      if (apiScenes.length > selectedSceneCount) {
+        apiScenes = apiScenes.slice(0, selectedSceneCount);
       }
 
       const mappedScenes: Scene[] = apiScenes.map((s, index) => ({
@@ -186,7 +188,7 @@ export function useVideoGeneration() {
       setStep(2);
       return true;
     },
-    [prompt, selectedTheme, setScenes, setStep, syncToDatabase]
+    [prompt, selectedTheme, selectedSceneCount, setScenes, setStep, syncToDatabase]
   );
 
   // -------------------------------------------------------------------------
