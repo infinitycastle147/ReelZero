@@ -6,13 +6,8 @@ import type {
   GeneratedScript,
   GeneratedScene,
 } from "@/lib/ai/types";
-import {
-  PROMPT_MIN_LENGTH,
-  PROMPT_MAX_LENGTH,
-  SCENE_DURATION_MIN,
-  SCENE_DURATION_MAX,
-} from "@/lib/constants/ai";
-import { MIN_SCENES, MAX_SCENES, VIDEO_DURATION_RANGE } from "@/lib/constants/video";
+import { PROMPT_MIN_LENGTH, PROMPT_MAX_LENGTH } from "@/lib/constants/ai";
+import { MIN_SCENES, MAX_SCENES } from "@/lib/constants/video";
 import { createGenerationLog, updateGenerationLog } from "@/lib/db/queries/generation-logs";
 import { AppError } from "@/lib/errors/app-error";
 import { ERROR_CODES } from "@/lib/errors/codes";
@@ -22,12 +17,10 @@ type RawGeminiScene = {
   scene_number: number;
   narration: string;
   visual_description: string;
-  duration_seconds: number;
   keywords: string[];
 };
 
 type RawGeminiScript = {
-  total_duration: number;
   scenes: RawGeminiScene[];
 };
 
@@ -51,38 +44,15 @@ function parseAndValidateScript(text: string, expectedSceneCount: number): Gener
     );
   }
 
-  // Transform to camelCase and validate individual scenes
-  const scenes: GeneratedScene[] = raw.scenes.map((scene) => {
-    if (
-      scene.duration_seconds < SCENE_DURATION_MIN ||
-      scene.duration_seconds > SCENE_DURATION_MAX
-    ) {
-      throw new AppError(
-        ERROR_CODES.GENERATION_SCRIPT_FAILED,
-        `Scene ${scene.scene_number} duration ${scene.duration_seconds}s is outside ${SCENE_DURATION_MIN}-${SCENE_DURATION_MAX}s range`,
-      );
-    }
+  // Transform snake_case → camelCase — duration is determined by TTS, not LLM
+  const scenes: GeneratedScene[] = raw.scenes.map((scene) => ({
+    sceneNumber: scene.scene_number,
+    narration: scene.narration,
+    visualDescription: scene.visual_description,
+    keywords: scene.keywords,
+  }));
 
-    return {
-      sceneNumber: scene.scene_number,
-      narration: scene.narration,
-      visualDescription: scene.visual_description,
-      durationSeconds: scene.duration_seconds,
-      keywords: scene.keywords,
-    };
-  });
-
-  const totalDuration = scenes.reduce((sum, s) => sum + s.durationSeconds, 0);
-
-  // Validate total duration
-  if (totalDuration < VIDEO_DURATION_RANGE.min || totalDuration > VIDEO_DURATION_RANGE.max) {
-    throw new AppError(
-      ERROR_CODES.GENERATION_SCRIPT_FAILED,
-      `Total duration ${totalDuration}s is outside ${VIDEO_DURATION_RANGE.min}-${VIDEO_DURATION_RANGE.max}s range`,
-    );
-  }
-
-  return { totalDuration, scenes };
+  return { scenes };
 }
 
 export async function generateScript(input: GenerateScriptInput): Promise<GeneratedScript> {
@@ -118,7 +88,6 @@ export async function generateScript(input: GenerateScriptInput): Promise<Genera
       topic: input.prompt,
       theme: input.theme,
       sceneCount: resolvedSceneCount,
-      targetDuration: VIDEO_DURATION_RANGE.max,
     });
 
     // Call Gemini text generation

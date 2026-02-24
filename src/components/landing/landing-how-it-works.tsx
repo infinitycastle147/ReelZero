@@ -40,7 +40,7 @@ export function LandingHowItWorks() {
     <section id="how-it-works" className="py-16 sm:py-24">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <div className="mb-12 text-center">
-          <h2 className="text-3xl font-bold tracking-tight text-foreground sm:text-4xl">
+          <h2 className="font-heading text-3xl font-bold tracking-tight text-foreground sm:text-4xl">
             How It Works
           </h2>
           <p className="mt-3 text-lg text-muted-foreground">
@@ -48,16 +48,18 @@ export function LandingHowItWorks() {
           </p>
         </div>
 
-        <div className="grid gap-10 lg:grid-cols-3">
+        <div className="grid gap-8 sm:grid-cols-2 sm:gap-10 lg:grid-cols-3">
           {STEPS.map((step) => (
             <div key={step.stepNumber} className="flex flex-col gap-4">
               {/* Step number badge */}
-              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary text-sm font-bold text-primary-foreground">
-                {step.stepNumber}
+              <div className="flex items-center gap-3">
+                <div className="flex h-9 w-9 items-center justify-center rounded-full border-2 border-primary/50 bg-primary/10 font-heading text-sm font-bold text-primary">
+                  {step.stepNumber}
+                </div>
               </div>
 
               {/* Step image */}
-              <div className="relative overflow-hidden rounded-xl border border-border/50">
+              <div className="relative overflow-hidden rounded-xl border border-border/50 transition-transform duration-200 hover:scale-[1.02]">
                 <Image
                   src={step.imageSrc}
                   alt={step.imageAlt}
@@ -69,7 +71,7 @@ export function LandingHowItWorks() {
 
               {/* Step copy */}
               <div>
-                <h3 className="text-lg font-semibold text-foreground">
+                <h3 className="font-heading text-lg font-semibold text-foreground">
                   {step.title}
                 </h3>
                 <p className="mt-1 text-sm text-muted-foreground">

@@ -167,6 +167,7 @@ export const POST = withErrorHandler(async (request: NextRequest) => {
     // Update current_stage and save audio as a first-class column.
     // audioStoragePath is kept in metadata for the deletion logic in deleteVideoWithStorage.
     await updateVideo(body.videoId, {
+      status: "processing",
       current_stage: "sync",
       audio_url: audioResult.storageUrl,
       metadata: {

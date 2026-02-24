@@ -15,4 +15,10 @@ export const AI_CONFIG = {
     defaultModel: "eleven_multilingual_v2",
     baseUrl: "https://api.elevenlabs.io/v1",
   },
+  // MVP fallback — remove when switching to a production image provider
+  pollinations: {
+    apiKey: process.env.POLLINATIONS_API_KEY!,
+    baseUrl: "https://gen.pollinations.ai",
+    model: "flux",
+  },
 } as const;

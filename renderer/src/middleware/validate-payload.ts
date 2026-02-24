@@ -13,7 +13,7 @@ export const renderJobSchema = z.object({
           .number()
           .int()
           .min(1)
-          .max(5, { message: "sceneNumber must be between 1 and 5" }),
+          .max(12, { message: "sceneNumber must be between 1 and 12" }),
         imageUrl: z.string().url({ message: "imageUrl must be a valid URL" }),
         durationInFrames: z
           .number()
@@ -33,7 +33,7 @@ export const renderJobSchema = z.object({
       }),
     )
     .min(3, { message: "scenes must contain at least 3 elements" })
-    .max(5, { message: "scenes must contain at most 5 elements" }),
+    .max(12, { message: "scenes must contain at most 12 elements" }),
   captionStyle: z.enum(["word-by-word", "full-sentence", "none"]),
   transitionType: z.enum(["fade", "crossfade"]),
   showWatermark: z.boolean(),

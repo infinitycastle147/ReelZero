@@ -8,6 +8,13 @@ import { AppError } from "@/lib/errors/app-error";
 import { ERROR_CODES } from "@/lib/errors/codes";
 import { withErrorHandler } from "@/lib/errors/middleware";
 
+// Next.js 15+ — params are Promises; resolve defensively to support both sync and async shapes.
+async function getRouteId(context: unknown): Promise<string> {
+  const ctx = context as { params: Promise<{ id: string }> | { id: string } };
+  const params = await Promise.resolve(ctx?.params);
+  return (params as { id: string })?.id ?? "";
+}
+
 type UpdateVideoMetadataRequest = {
   scenes?: unknown[];
   audioStoragePath?: string;
@@ -26,7 +33,7 @@ export const PATCH = withErrorHandler(async (
     throw new AppError(ERROR_CODES.AUTH_UNAUTHORIZED);
   }
 
-  const { id: videoId } = (context as { params: { id: string } }).params;
+  const videoId = await getRouteId(context);
 
   // Resolve Clerk ID → Supabase UUID
   const dbUser = await getUserByClerkId(clerkUserId);
@@ -69,7 +76,7 @@ export const GET = withErrorHandler(async (
     throw new AppError(ERROR_CODES.AUTH_UNAUTHORIZED);
   }
 
-  const { id: videoId } = (context as { params: { id: string } }).params;
+  const videoId = await getRouteId(context);
 
   // Resolve Clerk ID → Supabase UUID
   const dbUser = await getUserByClerkId(clerkUserId);

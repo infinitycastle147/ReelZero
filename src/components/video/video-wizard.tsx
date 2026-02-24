@@ -22,11 +22,12 @@ import type { VideoDbMetadata } from "@/types/video";
 function WizardSkeleton() {
   return (
     <div className="space-y-6" aria-busy="true" aria-label="Loading wizard…">
-      <Skeleton className="h-8 w-full rounded-full" />
-      <Skeleton className="h-48 w-full rounded-lg" />
+      <Skeleton className="h-10 w-full rounded-full" />
+      <div className="h-px w-full bg-border" />
+      <Skeleton className="h-52 w-full rounded-xl" />
       <div className="flex gap-3">
-        <Skeleton className="h-10 w-full rounded-md" />
-        <Skeleton className="h-10 w-32 rounded-md" />
+        <Skeleton className="h-10 w-full rounded-lg" />
+        <Skeleton className="h-10 w-40 rounded-lg" />
       </div>
     </div>
   );
@@ -39,6 +40,15 @@ const STEP_COMPONENTS: Record<number, () => React.JSX.Element> = {
   4: Step4Settings,
   5: Step5Progress,
   6: Step6Player,
+};
+
+const STEP_TITLES: Record<number, { title: string; subtitle: string }> = {
+  1: { title: "Describe your video", subtitle: "Tell us the idea — we'll handle the rest." },
+  2: { title: "Review your script", subtitle: "Edit narration and reorder scenes to your liking." },
+  3: { title: "Choose your visuals", subtitle: "Generate AI images or upload your own for each scene." },
+  4: { title: "Final settings", subtitle: "Review everything before we start rendering." },
+  5: { title: "Creating your video", subtitle: "Sit tight — this takes about a minute." },
+  6: { title: "Your video is ready", subtitle: "Download or share your creation." },
 };
 
 export function VideoWizard() {
@@ -82,31 +92,53 @@ export function VideoWizard() {
 
   // Block render until sessionStorage has been rehydrated
   if (!_hasHydrated) {
-    return <WizardSkeleton />;
+    return (
+      <div className="mx-auto w-full max-w-2xl">
+        <WizardSkeleton />
+      </div>
+    );
   }
 
   const StepComponent = STEP_COMPONENTS[currentStep] ?? Step1Input;
+  const stepMeta = STEP_TITLES[currentStep] ?? STEP_TITLES[1];
+  const showStepIndicator = currentStep <= 4;
+  const showStartOver = currentStep <= 4;
 
   return (
-    <div className="mx-auto w-full max-w-2xl space-y-6">
+    <div className="mx-auto w-full max-w-2xl space-y-5">
       {/* Step progress indicator */}
-      <WizardStepIndicator currentStep={currentStep} />
+      {showStepIndicator && (
+        <WizardStepIndicator currentStep={currentStep} />
+      )}
 
-      {/* Start Over */}
-      <div className="flex justify-end">
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={reset}
-          className="text-muted-foreground hover:text-foreground text-xs"
-        >
-          Start Over
-        </Button>
+      {/* Step context header + Start Over */}
+      <div className="flex items-start justify-between gap-4 pt-1">
+        <div className="min-w-0">
+          <h2 className="font-heading text-lg font-bold leading-tight tracking-tight text-foreground">
+            {stepMeta.title}
+          </h2>
+          <p className="mt-0.5 text-sm text-muted-foreground">{stepMeta.subtitle}</p>
+        </div>
+        {showStartOver && (
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={reset}
+            className="shrink-0 text-xs text-muted-foreground hover:text-foreground"
+          >
+            Start Over
+          </Button>
+        )}
       </div>
 
+      {/* Divider */}
+      <div className="h-px w-full bg-border" />
+
       {/* Active step content */}
-      <div className="rounded-xl border bg-card p-6 shadow-sm">
-        <StepComponent />
+      <div className="rounded-2xl border bg-card shadow-sm">
+        <div className="p-6">
+          <StepComponent />
+        </div>
       </div>
     </div>
   );

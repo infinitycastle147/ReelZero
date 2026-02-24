@@ -3,7 +3,7 @@
 // ── Provider Types ───────────────────────────────────────────────────────────
 
 export type TextProvider = "gemini";
-export type ImageProvider = "gemini";
+export type ImageProvider = "gemini" | "pollinations";
 export type TTSProvider = "elevenlabs";
 
 // ── Text Generation ──────────────────────────────────────────────────────────
@@ -84,12 +84,10 @@ export type GeneratedScene = {
   sceneNumber: number;
   narration: string;
   visualDescription: string;
-  durationSeconds: number;
   keywords: string[];
 };
 
 export type GeneratedScript = {
-  totalDuration: number;
   scenes: GeneratedScene[];
 };
 

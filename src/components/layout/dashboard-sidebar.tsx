@@ -24,9 +24,6 @@ type DashboardSidebarProps = {
 export function DashboardSidebar({ className }: DashboardSidebarProps) {
   return (
     <nav className={cn("flex flex-col gap-1 p-4", className)}>
-      <div className="mb-4 px-3 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-        Navigation
-      </div>
       {navigationItems.map((item) => (
         <SidebarNavItem
           key={item.href}

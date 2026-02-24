@@ -7,10 +7,10 @@ import { AppError } from "@/lib/errors/app-error";
 import { ERROR_CODES } from "@/lib/errors/codes";
 
 // Gemini JSON schema for script generation
+// Note: duration_seconds is intentionally omitted — actual duration is determined by TTS audio
 const SCRIPT_JSON_SCHEMA = {
   type: "object",
   properties: {
-    total_duration: { type: "integer" },
     scenes: {
       type: "array",
       items: {
@@ -19,20 +19,18 @@ const SCRIPT_JSON_SCHEMA = {
           scene_number: { type: "integer" },
           narration: { type: "string" },
           visual_description: { type: "string" },
-          duration_seconds: { type: "integer" },
           keywords: { type: "array", items: { type: "string" } },
         },
         required: [
           "scene_number",
           "narration",
           "visual_description",
-          "duration_seconds",
           "keywords",
         ],
       },
     },
   },
-  required: ["total_duration", "scenes"],
+  required: ["scenes"],
 };
 
 type GeminiGenerateContentResponse = {
@@ -119,7 +117,11 @@ export async function generateText(input: TextGenerationInput): Promise<TextGene
   }
 
   if (finishReason === "MAX_TOKENS") {
-    throw new RetryableError("Gemini response truncated (MAX_TOKENS) — retrying", 429);
+    // Retrying won't fix a token limit — throw a terminal AppError immediately
+    throw new AppError(
+      ERROR_CODES.GENERATION_SCRIPT_FAILED,
+      "Script generation failed — response was cut off. Please try a shorter or simpler prompt.",
+    );
   }
 
   const text = result.candidates?.[0]?.content?.parts?.[0]?.text;

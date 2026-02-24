@@ -5,6 +5,8 @@
 import { Player } from "@remotion/player";
 import { useEffect } from "react";
 
+import { downloadFile } from "@/lib/utils";
+
 import {
   VIDEO_FRAME_RATE,
   VIDEO_RESOLUTION_WIDTH,
@@ -48,21 +50,21 @@ export function VideoPlayer(props: VideoPlayerProps) {
         style={{ width: "100%", maxWidth: 400 }}
       />
 
-      <a
-        href={videoUrl}
-        download="video.mp4"
+      <button
+        onClick={() => downloadFile(videoUrl, "video.mp4")}
         style={{
           display: "inline-block",
           padding: "0.6rem 1.5rem",
           background: "#000",
           color: "#fff",
           borderRadius: "6px",
-          textDecoration: "none",
+          border: "none",
+          cursor: "pointer",
           fontWeight: 600,
         }}
       >
         Download MP4
-      </a>
+      </button>
     </div>
   );
 }

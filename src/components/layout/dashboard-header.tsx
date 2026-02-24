@@ -1,7 +1,7 @@
 "use client";
 
 import { UserButton } from "@clerk/nextjs";
-import { Menu } from "lucide-react";
+import { Menu, Zap } from "lucide-react";
 import { useEffect } from "react";
 
 import { CreditDisplay } from "@/components/billing/credit-display";
@@ -31,7 +31,10 @@ export function DashboardHeader() {
         >
           <Menu className="h-5 w-5" />
         </button>
-        <span className="text-lg font-semibold tracking-tight">ReelZero</span>
+        <span className="flex items-center gap-1.5 font-heading text-lg font-bold tracking-tight">
+          <Zap className="h-4 w-4 text-primary" />
+          ReelZero
+        </span>
       </div>
       <div className="flex items-center gap-3">
         <CreditDisplay

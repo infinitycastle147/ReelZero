@@ -2,10 +2,12 @@
 
 import { generateImage } from "@/lib/ai/image-generation";
 import { processImage, validateImage } from "@/lib/ai/image-processing";
+import { generateImageWithPollinations } from "@/lib/ai/pollinations";
 import type {
   GenerateSceneImageInput,
   GenerateSceneImageOutput,
   BatchImageResult,
+  ImageGenerationOutput,
 } from "@/lib/ai/types";
 import { TARGET_IMAGE_WIDTH, TARGET_IMAGE_HEIGHT } from "@/lib/constants/ai";
 import { createGenerationLog, updateGenerationLog } from "@/lib/db/queries/generation-logs";
@@ -13,6 +15,7 @@ import { uploadFile, getFileUrl } from "@/lib/db/storage";
 import { AppError } from "@/lib/errors/app-error";
 import { ERROR_CODES } from "@/lib/errors/codes";
 import { buildImagePrompt } from "@/lib/prompts/image-generation";
+import { buildPollinationsPrompt } from "@/lib/prompts/pollinations-image";
 
 export async function generateSceneImage(
   input: GenerateSceneImageInput,
@@ -23,8 +26,20 @@ export async function generateSceneImage(
     theme: input.theme,
   });
 
-  // Generate image via Gemini
-  const imageResult = await generateImage({ prompt });
+  // Generate image via Gemini, fall back to Pollinations on any failure
+  let imageResult: ImageGenerationOutput;
+  try {
+    imageResult = await generateImage({ prompt });
+  } catch {
+    console.warn(
+      `[scene-image] Gemini failed for scene ${input.sceneNumber}, falling back to Pollinations`,
+    );
+    const pollinationsPrompt = buildPollinationsPrompt({
+      visualDescription: input.visualDescription,
+      theme: input.theme,
+    });
+    imageResult = await generateImageWithPollinations(pollinationsPrompt);
+  }
 
   // Decode base64 to buffer
   const imageBuffer = Buffer.from(imageResult.imageBase64, "base64");

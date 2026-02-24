@@ -8,7 +8,10 @@ const isPublicRoute = createRouteMatcher([
   "/api/auth/webhook",
   // Renderer microservice callbacks — authenticated via x-render-secret, not Clerk
   "/api/video/render/complete",
+  "/api/video/render/complete-fallback",
   "/api/video/render/stage",
+  // Stripe webhook — authenticated via Stripe signature, not Clerk
+  "/api/subscription/webhook",
 ]);
 
 const isAuthRoute = createRouteMatcher(["/sign-in(.*)", "/sign-up(.*)"]);

@@ -6,7 +6,6 @@ export type ScriptPromptInput = {
   topic: string;
   theme: ScriptTheme;
   sceneCount: number;
-  targetDuration: number;
 };
 
 export type ImagePromptInput = {

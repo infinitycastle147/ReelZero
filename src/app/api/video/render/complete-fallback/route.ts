@@ -53,13 +53,18 @@ export const POST = withErrorHandler(async (request: NextRequest) => {
   // storage_path = "{userId}/{videoId}.mp4" — same convention as complete/route.ts
   const storagePath = `${video.user_id}/${body.videoId}.mp4`;
 
+  // Round duration to integer — DB column is INTEGER, renderer may send a decimal (e.g. 15.3)
+  const durationSeconds = body.durationSeconds != null
+    ? Math.round(body.durationSeconds)
+    : null;
+
   await updateVideo(body.videoId, {
     status: "completed",
     current_stage: null,
     video_url: body.outputUrl,
     storage_path: storagePath,
     ...(body.audioUrl ? { audio_url: body.audioUrl } : {}),
-    duration_seconds: body.durationSeconds ?? null,
+    duration_seconds: durationSeconds,
     file_size_bytes: body.fileSizeBytes ?? null,
   });
 

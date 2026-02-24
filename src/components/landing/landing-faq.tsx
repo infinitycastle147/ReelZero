@@ -57,7 +57,7 @@ export function LandingFaq() {
     <section id="faq" className="py-16 sm:py-24">
       <div className="mx-auto max-w-3xl px-4 sm:px-6 lg:px-8">
         <div className="mb-12 text-center">
-          <h2 className="text-3xl font-bold tracking-tight text-foreground sm:text-4xl">
+          <h2 className="font-heading text-3xl font-bold tracking-tight text-foreground sm:text-4xl">
             Frequently Asked Questions
           </h2>
           <p className="mt-3 text-lg text-muted-foreground">

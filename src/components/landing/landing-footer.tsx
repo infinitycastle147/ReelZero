@@ -1,3 +1,4 @@
+import { Zap } from "lucide-react";
 import Link from "next/link";
 
 export function LandingFooter() {
@@ -5,10 +6,16 @@ export function LandingFooter() {
     <footer className="border-t border-border/50 py-8">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <div className="flex flex-col items-center gap-4 sm:flex-row sm:justify-between">
-          {/* Copyright */}
-          <p className="text-sm text-muted-foreground">
-            © 2026 ReelZero. All rights reserved.
-          </p>
+          {/* Brand + copyright */}
+          <div className="flex flex-col items-center gap-1 sm:items-start">
+            <Link href="/" className="flex items-center gap-1.5 font-heading text-sm font-bold text-foreground">
+              <Zap className="h-4 w-4 text-primary" />
+              ReelZero
+            </Link>
+            <p className="text-xs text-muted-foreground">
+              © 2026 ReelZero. All rights reserved.
+            </p>
+          </div>
 
           {/* Nav links */}
           <nav className="flex flex-wrap items-center justify-center gap-x-6 gap-y-2">

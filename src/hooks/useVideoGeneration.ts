@@ -40,12 +40,10 @@ type ScriptSceneResponse = {
   sceneNumber: number;
   narration: string;
   visualDescription: string;
-  durationSeconds: number;
   keywords: string[];
 };
 
 type GenerateScriptData = {
-  totalDuration: number;
   scenes: ScriptSceneResponse[];
 };
 
@@ -83,29 +81,32 @@ export function useVideoGeneration() {
   // Helper: Sync Zustand state to database
   // -------------------------------------------------------------------------
   const syncToDatabase = useCallback(async (videoId: string): Promise<boolean> => {
-    try {
-      const state = useVideoStore.getState();
-      
-      // Save scenes in the same format expected by the render route
-      const scenesForDb = state.scenes.map((scene) => ({
-        id: scene.id,
-        order: scene.order,
-        narration: scene.narration,
-        visualDescription: scene.visualDescription,
-        imageUrl: scene.imageUrl,
-        imageSource: scene.imageSource,
-        duration: scene.duration,
-        imageStatus: scene.imageStatus,
-      }));
+    const state = useVideoStore.getState();
 
-      await apiClient.patch(`/api/video/${videoId}`, {
-        scenes: scenesForDb,
-      });
+    // Save scenes in the same format expected by the render route
+    const scenesForDb = state.scenes.map((scene) => ({
+      id: scene.id,
+      order: scene.order,
+      narration: scene.narration,
+      visualDescription: scene.visualDescription,
+      imageUrl: scene.imageUrl,
+      imageSource: scene.imageSource,
+      duration: scene.duration,
+      imageStatus: scene.imageStatus,
+    }));
 
-      return true;
-    } catch {
+    // apiClient never throws — it returns { error } on failure, never rejects.
+    // Must check response.error explicitly; try/catch would never fire.
+    const response = await apiClient.patch(`/api/video/${videoId}`, {
+      scenes: scenesForDb,
+    });
+
+    if (response.error) {
+      console.error("[syncToDatabase] Failed to sync scenes:", response.error);
       return false;
     }
+
+    return true;
   }, []);
 
   // -------------------------------------------------------------------------
@@ -162,7 +163,7 @@ export function useVideoGeneration() {
         visualDescription: s.visualDescription,
         imageUrl: null,
         imageSource: "ai" as const,
-        duration: s.durationSeconds ?? null,
+        duration: null, // set by TTS audio after generation
         imageStatus: "idle" as const,
       }));
 
@@ -372,10 +373,36 @@ export function useVideoGeneration() {
     }
   }, [createVideoRecord, generateScript]);
 
+  // -------------------------------------------------------------------------
+  // (g) Manual path: createVideoRecord + empty scenes, no AI call, no credits
+  // -------------------------------------------------------------------------
+  const createAndSkipToManual = useCallback(async (): Promise<boolean> => {
+    setError(null);
+    const newVideoId = await createVideoRecord();
+    if (!newVideoId) return false;
+
+    const emptyScenes: Scene[] = Array.from({ length: selectedSceneCount }, (_, i) => ({
+      id: crypto.randomUUID(),
+      order: i + 1,
+      narration: "",
+      visualDescription: "",
+      imageUrl: null,
+      imageSource: "ai" as const,
+      duration: null,
+      imageStatus: "idle" as const,
+    }));
+
+    setScenes(emptyScenes);
+    await syncToDatabase(newVideoId);
+    setStep(2);
+    return true;
+  }, [createVideoRecord, selectedSceneCount, setScenes, setStep, syncToDatabase]);
+
   return {
     error,
     setError,
     createAndGenerateScript,
+    createAndSkipToManual,
     generateSceneImage,
     generateAllImages,
     submitVideoJob,

@@ -35,6 +35,8 @@ export const POST = withErrorHandler(async (request: NextRequest) => {
     throw new AppError(ERROR_CODES.VALIDATION_MISSING_FIELD, "videoId is required");
   }
 
+  console.log(`[render/complete] Received callback: videoId=${body.videoId}, status=${body.status}`);
+
   // Fetch video and verify it exists
   const video = await getVideoById(body.videoId);
   if (!video) {
@@ -57,19 +59,38 @@ export const POST = withErrorHandler(async (request: NextRequest) => {
 
   if (body.status === "completed" && body.outputUrl) {
     // --- Success path ---
-    // Fetch first 12 bytes from outputUrl and validate MP4 signature
+    // Validate MP4 by fetching only the first 12 bytes via Range header.
+    // Previously fetched the ENTIRE file (10-50 MB) just for 12-byte check,
+    // which caused timeouts and memory pressure in serverless environments.
     let mp4Valid = false;
     try {
-      const res = await fetch(body.outputUrl);
-      const arrayBuf = await res.arrayBuffer();
-      const buf = Buffer.from(arrayBuf.slice(0, 12));
-      mp4Valid = validateMp4Buffer(buf);
-    } catch {
+      const res = await fetch(body.outputUrl, {
+        headers: { Range: "bytes=0-11" },
+        signal: AbortSignal.timeout(10_000),
+      });
+
+      // Supabase Storage may return 200 (full body) or 206 (partial content).
+      // Accept either — just read the first 12 bytes of whatever comes back.
+      if (res.ok || res.status === 206) {
+        const arrayBuf = await res.arrayBuffer();
+        const buf = Buffer.from(arrayBuf.slice(0, 12));
+        mp4Valid = validateMp4Buffer(buf);
+      } else {
+        console.warn(
+          `[render/complete] MP4 fetch returned ${res.status} for videoId=${body.videoId}`,
+        );
+      }
+    } catch (err) {
+      console.warn(
+        `[render/complete] MP4 validation fetch failed for videoId=${body.videoId}:`,
+        err instanceof Error ? err.message : String(err),
+      );
       mp4Valid = false;
     }
 
     if (!mp4Valid) {
       // MP4 validation failed — treat as render failure
+      console.warn(`[render/complete] MP4 validation failed for videoId=${body.videoId}, treating as failure`);
       await handleFailure(clerkUserId, body.videoId, video, "MP4 validation failed");
       return NextResponse.json({ data: { received: true } });
     }
@@ -77,26 +98,47 @@ export const POST = withErrorHandler(async (request: NextRequest) => {
     // storage_path = "{userId}/{videoId}.mp4" — same convention used by renderer/src/services/storage.ts
     const storagePath = `${video.user_id}/${body.videoId}.mp4`;
 
+    // Round duration to integer — DB column is INTEGER, renderer may send a decimal (e.g. 15.3)
+    const durationSeconds = body.durationSeconds != null
+      ? Math.round(body.durationSeconds)
+      : null;
+
     // Update video record as completed
-    await updateVideo(body.videoId, {
-      status: "completed",
-      current_stage: null,
-      video_url: body.outputUrl,
-      storage_path: storagePath,
-      // Upsert audio_url if echoed back by renderer (belt-and-suspenders in case
-      // the write in POST /api/video/render didn't persist before the job completed)
-      ...(body.audioUrl ? { audio_url: body.audioUrl } : {}),
-      duration_seconds: body.durationSeconds ?? null,
-      file_size_bytes: body.fileSizeBytes ?? null,
-    });
+    try {
+      await updateVideo(body.videoId, {
+        status: "completed",
+        current_stage: null,
+        video_url: body.outputUrl,
+        storage_path: storagePath,
+        // Upsert audio_url if echoed back by renderer (belt-and-suspenders in case
+        // the write in POST /api/video/render didn't persist before the job completed)
+        ...(body.audioUrl ? { audio_url: body.audioUrl } : {}),
+        duration_seconds: durationSeconds,
+        file_size_bytes: body.fileSizeBytes ?? null,
+      });
+    } catch (err) {
+      console.error(
+        `[render/complete] updateVideo FAILED for videoId=${body.videoId}:`,
+        err instanceof Error ? err.message : String(err),
+      );
+      throw err;
+    }
 
     // Credit reservation is consumed by NOT calling refundCredit
-    // Log success
-    await createGenerationLog({
-      video_id: body.videoId,
-      stage: "render",
-      status: "success",
-    });
+    // Log success (non-critical — video is already marked completed)
+    try {
+      await createGenerationLog({
+        video_id: body.videoId,
+        stage: "render",
+        status: "success",
+      });
+    } catch (err) {
+      console.error(
+        `[render/complete] createGenerationLog failed for videoId=${body.videoId}:`,
+        err instanceof Error ? err.message : String(err),
+      );
+      // Don't re-throw — the video update already succeeded, generation log is non-critical
+    }
   } else {
     // --- Failure path ---
     await handleFailure(clerkUserId, body.videoId, video, body.error ?? "Render failed");

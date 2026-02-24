@@ -24,13 +24,12 @@ Narration style — make every word earn its place:
 Rhythm: write for the spoken word. Short sentences. Occasional fragment for emphasis. Think — pause — deliver.
 
 ━━━ SCENE REQUIREMENTS ━━━
-Generate exactly ${input.sceneCount} scenes. Total duration: 50–${input.targetDuration} seconds.
+Generate exactly ${input.sceneCount} scenes.
 
 Each scene object must contain:
 • "scene_number": integer starting at 1
 • "narration": 20–30 words of spoken copy (strict hard cap)
 • "visual_description": vivid, specific description suitable for AI image generation — include subject, setting, lighting, mood, composition
-• "duration_seconds": integer 10–12
 • "keywords": array of 3–5 relevant keywords
 
 ━━━ THEME: ${input.theme.toUpperCase()} ━━━
@@ -39,7 +38,6 @@ ${getThemeGuidelines(input.theme)}
 ━━━ OUTPUT FORMAT ━━━
 Return valid JSON only — no markdown, no commentary outside the JSON.
 {
-  "total_duration": <sum of scene durations, integer 50–${input.targetDuration}>,
   "scenes": [ ...scene objects ]
 }
 

@@ -46,7 +46,7 @@ export function LandingPricingTable() {
     <section id="pricing" className="py-16 sm:py-24">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <div className="mb-12 text-center">
-          <h2 className="text-3xl font-bold tracking-tight text-foreground sm:text-4xl">
+          <h2 className="font-heading text-3xl font-bold tracking-tight text-foreground sm:text-4xl">
             Simple, Transparent Pricing
           </h2>
           <p className="mt-3 text-lg text-muted-foreground">
@@ -54,7 +54,7 @@ export function LandingPricingTable() {
           </p>
         </div>
 
-        <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-4">
+        <div className="grid gap-6 pt-4 md:grid-cols-2 lg:grid-cols-4">
           {PRICING_TIERS.map((tier) => {
             const features = LANDING_TIER_FEATURES[tier.id] ?? [];
             const isPro = tier.id === "pro";
@@ -63,8 +63,10 @@ export function LandingPricingTable() {
             return (
               <Card
                 key={tier.id}
-                className={`relative flex flex-col border-border/50 bg-card/50 backdrop-blur-sm ${
-                  isPro ? "ring-2 ring-primary" : ""
+                className={`relative flex flex-col border-border/50 bg-card/50 backdrop-blur-sm transition-shadow ${
+                  isPro
+                    ? "ring-2 ring-primary shadow-[0_0_24px_oklch(0.546_0.245_262.881/0.20)]"
+                    : "hover:border-border hover:shadow-sm"
                 }`}
               >
                 {isPro && (
@@ -76,19 +78,19 @@ export function LandingPricingTable() {
                 )}
 
                 <CardHeader className="pb-3">
-                  <CardTitle className="text-base font-semibold text-foreground">
+                  <CardTitle className="font-heading text-base font-semibold text-foreground">
                     {tier.name}
                   </CardTitle>
                   <div className="mt-2">
                     {tier.id === "free" && (
-                      <span className="text-3xl font-extrabold text-foreground">Free</span>
+                      <span className="font-heading text-3xl font-extrabold text-foreground">Free</span>
                     )}
                     {isEnterprise && (
-                      <span className="text-3xl font-extrabold text-foreground">Custom</span>
+                      <span className="font-heading text-3xl font-extrabold text-foreground">Custom</span>
                     )}
                     {tier.id !== "free" && !isEnterprise && (
                       <span className="text-foreground">
-                        <span className="text-3xl font-extrabold">
+                        <span className="font-heading text-3xl font-extrabold">
                           ${(tier.monthlyPrice / 100).toFixed(0)}
                         </span>
                         <span className="ml-1 text-sm text-muted-foreground">/month</span>

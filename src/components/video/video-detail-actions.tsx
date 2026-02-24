@@ -9,6 +9,7 @@ import { useState } from "react";
 
 import { Button } from "@/components/ui/button";
 import { DeleteVideoDialog } from "@/components/video/delete-video-dialog";
+import { downloadFile } from "@/lib/utils";
 
 type VideoDetailActionsProps = {
   videoId: string;
@@ -42,11 +43,9 @@ export function VideoDetailActions({
           </Button>
         )}
         {status === "completed" && signedVideoUrl && (
-          <Button size="sm" asChild>
-            <a href={signedVideoUrl} download={`${title}.mp4`}>
-              <Download className="mr-1.5 h-4 w-4" />
-              Download MP4
-            </a>
+          <Button size="sm" onClick={() => downloadFile(signedVideoUrl, `${title}.mp4`)}>
+            <Download className="mr-1.5 h-4 w-4" />
+            Download MP4
           </Button>
         )}
         <Button

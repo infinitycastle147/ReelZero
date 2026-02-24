@@ -35,7 +35,7 @@ export function LandingFeatures() {
     <section id="features" className="py-16 sm:py-24">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <div className="mb-12 text-center">
-          <h2 className="text-3xl font-bold tracking-tight text-foreground sm:text-4xl">
+          <h2 className="font-heading text-3xl font-bold tracking-tight text-foreground sm:text-4xl">
             Why ReelZero?
           </h2>
           <p className="mt-3 text-lg text-muted-foreground">
@@ -43,19 +43,27 @@ export function LandingFeatures() {
           </p>
         </div>
 
-        <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
-          {FEATURES.map((feature) => {
+        <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 md:grid-cols-3">
+          {FEATURES.map((feature, index) => {
             const Icon = feature.icon;
             return (
               <Card
                 key={feature.title}
-                className="border-border/50 bg-card/50 backdrop-blur-sm"
+                className="group relative overflow-hidden border-border/50 bg-card/50 backdrop-blur-sm transition-colors hover:border-primary/30 hover:bg-card/80"
               >
+                {/* Large background step number */}
+                <div
+                  className="pointer-events-none absolute right-3 top-1 select-none font-heading text-8xl font-extrabold leading-none text-foreground/[0.04]"
+                  aria-hidden="true"
+                >
+                  {String(index + 1).padStart(2, "0")}
+                </div>
+
                 <CardHeader className="pb-3">
-                  <div className="mb-3 flex h-12 w-12 items-center justify-center rounded-xl bg-primary/10">
+                  <div className="mb-3 flex h-12 w-12 items-center justify-center rounded-xl bg-primary/10 transition-colors group-hover:bg-primary/15">
                     <Icon className="h-6 w-6 text-primary" />
                   </div>
-                  <h3 className="text-lg font-semibold text-foreground">
+                  <h3 className="font-heading text-lg font-semibold text-foreground">
                     {feature.title}
                   </h3>
                 </CardHeader>

@@ -122,6 +122,14 @@ export async function dispatchToRenderer(
   }
 
   if (!response.ok) {
+    // Read the response body for Zod validation details (422) or other error info
+    let errorBody = "";
+    try {
+      errorBody = await response.text();
+    } catch {
+      // Best effort — don't mask the original error
+    }
+    console.error(`[dispatchToRenderer] ${response.status} ${response.statusText}:`, errorBody);
     throw new AppError(
       ERROR_CODES.RENDER_SERVICE_UNAVAILABLE,
       `Renderer returned ${response.status}: ${response.statusText}`
