@@ -10,6 +10,18 @@ const eslintConfig = defineConfig([
     "out/**",
     "build/**",
     "next-env.d.ts",
+    "renderer/dist/**",
+    "renderer/src/**",
+    "renderer/node_modules/**",
+    "check-video-scenes.ts",
+    "debug-last-attempt.ts",
+    "fix-stuck-video.ts",
+    "fix-video-add-images.ts",
+    "test-complete-render-with-real-images.ts",
+    "test-end-to-end-render.ts",
+    "test-find-complete-video.ts",
+    "test-fix-verification.ts",
+    "src/app/api/video/route 2.ts",
   ]),
   {
     rules: {

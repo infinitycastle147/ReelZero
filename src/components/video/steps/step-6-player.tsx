@@ -64,7 +64,7 @@ export function Step6Player() {
 
       {/* Actions */}
       <div className="flex flex-col gap-2 sm:flex-row">
-        <Button className="flex-1 gap-2" onClick={() => downloadFile(pollResult.videoUrl, "video.mp4")}>
+        <Button className="flex-1 gap-2" onClick={() => downloadFile(pollResult.videoUrl!, "video.mp4")}>
           <Download className="h-4 w-4" />
           Download MP4
         </Button>
