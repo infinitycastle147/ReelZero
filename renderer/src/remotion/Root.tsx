@@ -16,8 +16,8 @@ import {
 import { VideoComposition } from "@/remotion/VideoComposition";
 import type { VideoCompositionProps } from "@/types/remotion";
 
-// 60 seconds at 30fps = 1800 frames (maximum composition duration)
-const MAX_DURATION_FRAMES = 1800;
+// 60 seconds at 24fps = 1440 frames (maximum composition duration)
+const MAX_DURATION_FRAMES = 1440;
 
 const defaultProps: VideoCompositionProps = {
   audioUrl: "",

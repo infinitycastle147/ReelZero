@@ -9,6 +9,7 @@ import {
 import { updateJob } from "@/services/job-map";
 import { getServeUrl, renderComposition } from "@/services/remotion";
 import { uploadMp4 } from "@/services/storage";
+import { VIDEO_FRAME_RATE } from "@/lib/constants/video";
 import type { RenderJobPayload } from "@/types/render";
 import type { VideoCompositionProps } from "@/types/remotion";
 
@@ -104,8 +105,7 @@ export async function processJob(
     // Get file stats for callback payload
     const stats = await fs.stat(outputPath);
     const fileSizeBytes = stats.size;
-    // Compute duration from totalFrames at 30fps
-    const durationSeconds = Math.round((totalFrames / 30) * 10) / 10;
+    const durationSeconds = Math.round((totalFrames / VIDEO_FRAME_RATE) * 10) / 10;
 
     console.log(
       `[pipeline] Job ${jobId}: uploaded to Supabase. outputUrl=${outputUrl}`,

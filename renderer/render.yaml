@@ -13,7 +13,7 @@ services:
       - key: PORT
         value: 3001
       - key: REMOTION_CONCURRENCY
-        value: 2
+        value: 1
       - key: REMOTION_OUTPUT_DIR
         value: /tmp/renders
 

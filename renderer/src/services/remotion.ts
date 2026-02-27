@@ -155,7 +155,7 @@ export async function renderComposition(
     codec: "h264",
     outputLocation: outputPath,
     inputProps,
-    concurrency: Number(process.env.REMOTION_CONCURRENCY ?? "2"),
+    concurrency: Number(process.env.REMOTION_CONCURRENCY ?? "1"),
     // H.264 compression: CRF 23 = good quality at ~60% smaller file vs Remotion default.
     // Scale: 0 (lossless) → 51 (worst). 18–28 is the sweet spot; 23 is FFmpeg default.
     // Targets ~8–15 MB for a 60-second 1080×1920 reel, well under Supabase's 50 MB limit.

@@ -1,6 +1,6 @@
 export const VIDEO_RESOLUTION_WIDTH = 1080 as const;
 export const VIDEO_RESOLUTION_HEIGHT = 1920 as const;
-export const VIDEO_FRAME_RATE = 30 as const;
+export const VIDEO_FRAME_RATE = 24 as const;
 export const VIDEO_DURATION_RANGE = Object.freeze({
   min: 50,
   max: 60,
